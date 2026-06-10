@@ -198,19 +198,15 @@
   <!-- STEP 2: Peer Evaluation -->
   <div id="step2" class="step-content hidden">
     <div class="card">
-      <h2>Evaluate these ideas 🔍</h2>
+      <h2>Rank these ideas 🔍</h2>
       <p class="subtitle">
-        Here are 5 ideas from other participants. Rate each on <strong>originality</strong> and <strong>feasibility</strong>, then rank them from best to worst.
+        Here are 5 ideas from other participants. Drag and drop to rank them from <strong>best (#1)</strong> to <strong>worst</strong>.
+        Which idea would have the biggest positive impact on lectures?
       </p>
-      <div id="peerIdeas"></div>
-
-      <div id="peerRankSection" class="hidden" style="margin-top:24px;">
-        <h3 style="font-size:16px;font-weight:600;margin-bottom:12px;">Now rank these 5 ideas (drag to reorder):</h3>
-        <div id="peerRankList"></div>
-      </div>
+      <div id="peerRankList"></div>
     </div>
     <div class="actions">
-      <button class="btn btn-primary" onclick="submitPeerEval()" id="submitPeerBtn" disabled>Submit →</button>
+      <button class="btn btn-primary" onclick="submitPeerEval()">Submit →</button>
     </div>
   </div>
 
@@ -342,7 +338,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // Phase 2: Self-Ranking
 function goToRanking() {
   if (ideas.length < 2) { showToast('Add at least 2 ideas'); return; }
-  selfRanking = ideas.map(i=>i.id);
+  selfRanking = ideas.map(i=>i.id).sort(()=>Math.random()-.5);
   renderRankList('rankList', selfRanking, ideas);
   showStep(1);
 }
@@ -427,40 +423,10 @@ function loadDemoPeerIdeas() {
   renderPeerIdeas();
 }
 
-// Phase 3: Peer Evaluation
+// Phase 3: Peer Ranking (no ratings, just rank)
 function renderPeerIdeas() {
-  document.getElementById('peerIdeas').innerHTML = peerIdeas.map((idea,idx) => `
-    <div class="peer-idea-card" id="peer-${idea.id}">
-      <div class="idea-label">Idea ${idx+1} of ${PEER_COUNT}</div>
-      <div class="idea-content">${escHtml(idea.text)}</div>
-      <div class="rating-row">
-        <div class="rating-group"><label>Originality</label><div class="star-row">
-          ${[1,2,3,4,5].map(v=>`<button class="star-btn" data-idea="${idea.id}" data-dim="originality" data-val="${v}" onclick="ratePeer(this)">${v}</button>`).join('')}
-        </div></div>
-        <div class="rating-group"><label>Feasibility</label><div class="star-row">
-          ${[1,2,3,4,5].map(v=>`<button class="star-btn" data-idea="${idea.id}" data-dim="feasibility" data-val="${v}" onclick="ratePeer(this)">${v}</button>`).join('')}
-        </div></div>
-      </div>
-    </div>`).join('');
-  peerRanking = peerIdeas.map(i=>i.id);
+  peerRanking = peerIdeas.map(i=>i.id).sort(()=>Math.random()-.5);
   renderRankList('peerRankList', peerRanking, peerIdeas);
-  checkPeerComplete();
-}
-
-function ratePeer(btn) {
-  const {idea,dim,val} = btn.dataset;
-  if (!peerRatings[idea]) peerRatings[idea]={};
-  peerRatings[idea][dim] = parseInt(val);
-  document.getElementById(`peer-${idea}`).querySelectorAll(`.star-btn[data-dim="${dim}"]`).forEach(b => {
-    b.classList.toggle('selected', parseInt(b.dataset.val)<=parseInt(val));
-  });
-  checkPeerComplete();
-}
-
-function checkPeerComplete() {
-  const allRated = peerIdeas.every(i=>peerRatings[i.id]&&peerRatings[i.id].originality&&peerRatings[i.id].feasibility);
-  document.getElementById('peerRankSection').classList.toggle('hidden', !allRated);
-  document.getElementById('submitPeerBtn').disabled = !allRated;
 }
 
 // Submit peer evaluation
@@ -468,7 +434,6 @@ async function submitPeerEval() {
   if (supabase) {
     const reviews = peerRanking.map((id,idx)=>({
       id:crypto.randomUUID(), idea_id:id, reviewer_id:participantId,
-      originality:peerRatings[id].originality, feasibility:peerRatings[id].feasibility,
       peer_rank:idx+1, created_at:new Date().toISOString()
     }));
     await sbInsert('reviews', reviews);

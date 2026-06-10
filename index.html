@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Idea Friction</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #f8f9fb; --card: #ffffff; --primary: #2563eb; --primary-hover: #1d4ed8;
+    --accent: #10b981; --danger: #ef4444; --text: #1e293b; --muted: #64748b;
+    --border: #e2e8f0; --radius: 12px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+  .progress-bar { position:fixed; top:0; left:0; width:100%; height:4px; background:var(--border); z-index:100; }
+  .progress-fill { height:100%; background:linear-gradient(90deg,var(--primary),var(--accent)); transition:width .4s ease; }
+  .container { max-width:720px; margin:0 auto; padding:40px 24px 80px; }
+  .logo { text-align:center; margin-bottom:32px; }
+  .logo h1 { font-size:28px; font-weight:700; letter-spacing:-0.5px; }
+  .logo h1 span { color:var(--primary); }
+  .card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:32px; margin-bottom:24px; box-shadow:0 1px 3px rgba(0,0,0,.04); }
+  .card h2 { font-size:20px; font-weight:600; margin-bottom:4px; }
+  .card .subtitle { color:var(--muted); font-size:14px; margin-bottom:24px; line-height:1.5; }
+  .steps { display:flex; gap:8px; margin-bottom:32px; justify-content:center; }
+  .step-dot { width:10px; height:10px; border-radius:50%; background:var(--border); transition:all .3s; }
+  .step-dot.active { background:var(--primary); transform:scale(1.3); }
+  .step-dot.done { background:var(--accent); }
+  input[type="text"], textarea {
+    width:100%; padding:12px 16px; border:1px solid var(--border); border-radius:8px;
+    font-family:inherit; font-size:14px; transition:border .2s; outline:none; resize:vertical;
+  }
+  input:focus, textarea:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(37,99,235,.1); }
+  label { display:block; font-size:13px; font-weight:500; color:var(--muted); margin-bottom:6px; }
+  .btn {
+    display:inline-flex; align-items:center; gap:8px; padding:12px 24px; border:none;
+    border-radius:8px; font-family:inherit; font-size:14px; font-weight:600;
+    cursor:pointer; transition:all .2s;
+  }
+  .btn-primary { background:var(--primary); color:#fff; }
+  .btn-primary:hover { background:var(--primary-hover); transform:translateY(-1px); }
+  .btn-primary:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+  .btn-outline { background:transparent; color:var(--primary); border:1px solid var(--primary); }
+  .btn-outline:hover { background:rgba(37,99,235,.05); }
+  .btn-sm { padding:8px 14px; font-size:13px; }
+  .btn-block { width:100%; justify-content:center; }
+  .actions { display:flex; gap:12px; justify-content:flex-end; margin-top:24px; }
+  .idea-item {
+    display:flex; align-items:flex-start; gap:12px; padding:16px;
+    border:1px solid var(--border); border-radius:8px; margin-bottom:8px;
+    background:#fafbfc; transition:all .2s;
+  }
+  .idea-item:hover { border-color:#cbd5e1; }
+  .idea-number {
+    min-width:28px; height:28px; border-radius:50%; background:var(--primary);
+    color:#fff; display:flex; align-items:center; justify-content:center;
+    font-size:12px; font-weight:700; flex-shrink:0;
+  }
+  .idea-text { flex:1; font-size:14px; line-height:1.5; }
+  .idea-actions button {
+    width:28px; height:28px; border:none; background:transparent;
+    cursor:pointer; border-radius:6px; font-size:16px; color:var(--muted);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .idea-actions button:hover { background:var(--border); }
+  .rank-item {
+    display:flex; align-items:center; gap:12px; padding:16px;
+    border:2px solid var(--border); border-radius:8px; margin-bottom:8px;
+    background:#fff; cursor:grab; transition:all .2s; user-select:none;
+  }
+  .rank-item:active { cursor:grabbing; }
+  .rank-item.dragging { opacity:.5; border-color:var(--primary); }
+  .rank-item.drag-over { border-color:var(--accent); background:#f0fdf4; }
+  .rank-badge {
+    min-width:32px; height:32px; border-radius:8px; display:flex;
+    align-items:center; justify-content:center; font-weight:700; font-size:14px; flex-shrink:0;
+  }
+  .rank-badge.gold { background:#fef3c7; color:#92400e; }
+  .rank-badge.silver { background:#e2e8f0; color:#475569; }
+  .rank-badge.bronze { background:#fed7aa; color:#9a3412; }
+  .rank-badge.r4 { background:#e0e7ff; color:#3730a3; }
+  .rank-badge.r5 { background:#f1f5f9; color:#64748b; }
+  .rank-text { flex:1; font-size:14px; line-height:1.5; }
+  .drag-handle { color:var(--muted); font-size:18px; flex-shrink:0; }
+  .peer-idea-card {
+    border:2px solid var(--border); border-radius:var(--radius); padding:24px;
+    margin-bottom:16px; background:#fff;
+  }
+  .peer-idea-card .idea-label { font-size:12px; font-weight:600; color:var(--primary); text-transform:uppercase; letter-spacing:.5px; margin-bottom:8px; }
+  .peer-idea-card .idea-content { font-size:15px; line-height:1.6; margin-bottom:16px; }
+  .rating-row { display:flex; gap:16px; flex-wrap:wrap; }
+  .rating-group { flex:1; min-width:140px; }
+  .rating-group label { margin-bottom:8px; }
+  .star-row { display:flex; gap:4px; }
+  .star-btn {
+    width:36px; height:36px; border:1px solid var(--border); border-radius:6px;
+    background:#fff; cursor:pointer; font-size:14px; font-weight:600;
+    color:var(--muted); transition:all .15s; display:flex; align-items:center; justify-content:center;
+  }
+  .star-btn:hover { border-color:var(--primary); color:var(--primary); }
+  .star-btn.selected { background:var(--primary); color:#fff; border-color:var(--primary); }
+  .counter { text-align:right; font-size:13px; color:var(--muted); margin-top:8px; }
+  .thank-you { text-align:center; padding:48px 24px; }
+  .thank-you .icon { font-size:64px; margin-bottom:16px; }
+  .thank-you h2 { font-size:24px; margin-bottom:8px; }
+  .thank-you p { color:var(--muted); line-height:1.6; }
+  .hidden { display:none !important; }
+  .toast {
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+    background:#1e293b; color:#fff; padding:12px 24px; border-radius:8px;
+    font-size:14px; z-index:200; opacity:0; transition:opacity .3s; pointer-events:none;
+  }
+  .toast.show { opacity:1; }
+  .config-panel {
+    background:#fefce8; border:1px solid #fde68a; border-radius:8px;
+    padding:16px; margin-bottom:24px; font-size:13px;
+  }
+  .config-panel summary { cursor:pointer; font-weight:600; color:#92400e; }
+  .config-panel .config-fields { margin-top:12px; display:flex; flex-direction:column; gap:8px; }
+  .config-panel input { font-size:13px; padding:8px 12px; }
+  .session-info {
+    text-align:center; font-size:12px; color:var(--muted); margin-top:16px;
+    padding:8px; background:#f1f5f9; border-radius:6px;
+  }
+  @media(max-width:600px) {
+    .container { padding:24px 16px 60px; }
+    .card { padding:20px; }
+    .rating-row { flex-direction:column; gap:12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+<div class="toast" id="toast"></div>
+
+<div class="container">
+  <div class="logo">
+    <h1><span>Idea</span> Friction</h1>
+  </div>
+
+  <div class="steps" id="stepDots"></div>
+
+  <!-- STEP 0: Idea Generation (start here directly) -->
+  <div id="step0" class="step-content">
+    <div class="card">
+      <h2>How would you improve lectures at your university? 💡</h2>
+      <p class="subtitle">
+        Think about the lectures you attend — what would make them more engaging, more useful, or easier to learn from?
+        This could be anything: the format, the room, the materials, how professors teach, use of technology, interaction with students, etc.
+        Add up to 5 ideas.
+      </p>
+
+      <div id="ideaList"></div>
+
+      <div id="ideaInput" style="margin-top:16px;">
+        <textarea id="newIdea" rows="3" placeholder="Type your idea here..." maxlength="500"></textarea>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
+          <span class="counter" id="ideaCounter">0 / 5 ideas</span>
+          <button class="btn btn-primary btn-sm" onclick="addIdea()" id="addIdeaBtn">+ Add Idea</button>
+        </div>
+      </div>
+    </div>
+
+    <details class="config-panel">
+      <summary>⚙️ Supabase Configuration (Admin)</summary>
+      <div class="config-fields">
+        <label>Supabase URL</label>
+        <input type="text" id="cfgUrl" placeholder="https://xxxxx.supabase.co" />
+        <label>Supabase Anon Key</label>
+        <input type="text" id="cfgKey" placeholder="eyJhbGciOi..." />
+        <button class="btn btn-primary btn-sm" onclick="saveConfig()">Save & Connect</button>
+        <p style="color:#92400e;margin-top:4px;">Without Supabase, the tool runs in <strong>local demo mode</strong>.</p>
+      </div>
+    </details>
+
+    <div class="actions">
+      <button class="btn btn-primary" onclick="goToRanking()" id="toRankBtn" disabled>Continue →</button>
+    </div>
+  </div>
+
+  <!-- STEP 1: Self-Ranking -->
+  <div id="step1" class="step-content hidden">
+    <div class="card">
+      <h2>Rank your ideas 🏆</h2>
+      <p class="subtitle">
+        Drag and drop to order your ideas from <strong>best (#1)</strong> to <strong>worst</strong>.
+        Which idea would have the biggest positive impact on lectures?
+      </p>
+      <div id="rankList"></div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-outline" onclick="showStep(0)">← Back</button>
+      <button class="btn btn-primary" onclick="submitOwnIdeas()">Continue →</button>
+    </div>
+  </div>
+
+  <!-- STEP 2: Peer Evaluation -->
+  <div id="step2" class="step-content hidden">
+    <div class="card">
+      <h2>Evaluate these ideas 🔍</h2>
+      <p class="subtitle">
+        Here are 5 ideas from other participants. Rate each on <strong>originality</strong> and <strong>feasibility</strong>, then rank them from best to worst.
+      </p>
+      <div id="peerIdeas"></div>
+
+      <div id="peerRankSection" class="hidden" style="margin-top:24px;">
+        <h3 style="font-size:16px;font-weight:600;margin-bottom:12px;">Now rank these 5 ideas (drag to reorder):</h3>
+        <div id="peerRankList"></div>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-primary" onclick="submitPeerEval()" id="submitPeerBtn" disabled>Submit →</button>
+    </div>
+  </div>
+
+  <!-- STEP 3: Thank You -->
+  <div id="step3" class="step-content hidden">
+    <div class="card thank-you">
+      <div class="icon">🎉</div>
+      <h2>Thank you!</h2>
+      <p>Your ideas and evaluations have been recorded.</p>
+      <div class="session-info" id="sessionInfo"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const TOTAL_STEPS = 4;
+const MAX_IDEAS = 5;
+const PEER_COUNT = 5;
+let currentStep = 0;
+let ideas = [];
+let selfRanking = [];
+let peerIdeas = [];
+let peerRatings = {};
+let peerRanking = [];
+let participantId = crypto.randomUUID();
+let sessionId = crypto.randomUUID();
+let startTime = Date.now();
+let supabase = null;
+
+// Supabase helpers
+function saveConfig() {
+  const url = document.getElementById('cfgUrl').value.trim();
+  const key = document.getElementById('cfgKey').value.trim();
+  if (!url || !key) { showToast('Please fill both fields'); return; }
+  localStorage.setItem('sb_url', url);
+  localStorage.setItem('sb_key', key);
+  initSupabase(url, key);
+}
+function initSupabase(url, key) {
+  supabase = { url: url.replace(/\/$/, ''), key };
+  showToast('Connected to Supabase');
+}
+async function sbInsert(table, rows) {
+  if (!supabase) return null;
+  try {
+    const res = await fetch(`${supabase.url}/rest/v1/${table}`, {
+      method:'POST', headers:{'Content-Type':'application/json','apikey':supabase.key,'Authorization':`Bearer ${supabase.key}`,'Prefer':'return=representation'},
+      body:JSON.stringify(rows)
+    });
+    return await res.json();
+  } catch(e) { console.error(e); return null; }
+}
+async function sbSelect(table, query='') {
+  if (!supabase) return null;
+  try {
+    const res = await fetch(`${supabase.url}/rest/v1/${table}?${query}`, {
+      headers:{'apikey':supabase.key,'Authorization':`Bearer ${supabase.key}`}
+    });
+    return await res.json();
+  } catch(e) { console.error(e); return null; }
+}
+async function sbRpc(fn, params) {
+  if (!supabase) return null;
+  try {
+    const res = await fetch(`${supabase.url}/rest/v1/rpc/${fn}`, {
+      method:'POST', headers:{'Content-Type':'application/json','apikey':supabase.key,'Authorization':`Bearer ${supabase.key}`},
+      body:JSON.stringify(params)
+    });
+    return await res.json();
+  } catch(e) { console.error(e); return null; }
+}
+
+// Navigation
+function showStep(n) {
+  currentStep = n;
+  document.querySelectorAll('.step-content').forEach((el,i) => el.classList.toggle('hidden', i!==n));
+  document.getElementById('progressFill').style.width = (n/(TOTAL_STEPS-1)*100)+'%';
+  renderDots();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function renderDots() {
+  const c = document.getElementById('stepDots');
+  c.innerHTML = '';
+  for (let i=0;i<TOTAL_STEPS;i++) {
+    const d = document.createElement('div');
+    d.className = 'step-dot'+(i===currentStep?' active':'')+(i<currentStep?' done':'');
+    c.appendChild(d);
+  }
+}
+
+// Phase 1: Idea Generation
+function addIdea() {
+  const input = document.getElementById('newIdea');
+  const text = input.value.trim();
+  if (!text) { showToast('Please type an idea first'); return; }
+  if (ideas.length >= MAX_IDEAS) { showToast('Maximum 5 ideas reached'); return; }
+  ideas.push({id:crypto.randomUUID(), text, timestamp:Date.now()});
+  input.value = '';
+  renderIdeas();
+  input.focus();
+}
+function removeIdea(id) {
+  ideas = ideas.filter(i=>i.id!==id);
+  renderIdeas();
+}
+function renderIdeas() {
+  document.getElementById('ideaList').innerHTML = ideas.map((idea,idx) => `
+    <div class="idea-item">
+      <div class="idea-number">${idx+1}</div>
+      <div class="idea-text">${escHtml(idea.text)}</div>
+      <div class="idea-actions"><button onclick="removeIdea('${idea.id}')" title="Remove">&#10005;</button></div>
+    </div>`).join('');
+  document.getElementById('ideaCounter').textContent = `${ideas.length} / ${MAX_IDEAS} ideas`;
+  document.getElementById('toRankBtn').disabled = ideas.length < 2;
+  document.getElementById('addIdeaBtn').disabled = ideas.length >= MAX_IDEAS;
+  document.getElementById('newIdea').disabled = ideas.length >= MAX_IDEAS;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('newIdea').addEventListener('keydown', e => {
+    if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); addIdea(); }
+  });
+  // Auto-connect if saved
+  const url = localStorage.getItem('sb_url'), key = localStorage.getItem('sb_key');
+  if (url && key) initSupabase(url, key);
+  renderDots();
+});
+
+// Phase 2: Self-Ranking
+function goToRanking() {
+  if (ideas.length < 2) { showToast('Add at least 2 ideas'); return; }
+  selfRanking = ideas.map(i=>i.id);
+  renderRankList('rankList', selfRanking, ideas);
+  showStep(1);
+}
+
+function badgeClass(idx) { return ['gold','silver','bronze','r4','r5'][idx] || 'r5'; }
+
+function renderRankList(containerId, orderArr, sourceArr) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = orderArr.map((id,idx) => {
+    const idea = sourceArr.find(i=>i.id===id);
+    return `<div class="rank-item" draggable="true" data-id="${id}" data-container="${containerId}">
+      <div class="drag-handle">&#10303;</div>
+      <div class="rank-badge ${badgeClass(idx)}">#${idx+1}</div>
+      <div class="rank-text">${escHtml(idea.text)}</div>
+    </div>`;
+  }).join('');
+  container.querySelectorAll('.rank-item').forEach(item => {
+    item.addEventListener('dragstart', handleDragStart);
+    item.addEventListener('dragover', handleDragOver);
+    item.addEventListener('drop', handleDrop);
+    item.addEventListener('dragend', handleDragEnd);
+    item.addEventListener('dragleave', handleDragLeave);
+  });
+}
+
+let draggedId=null, dragContainer=null;
+function handleDragStart(e) { draggedId=e.currentTarget.dataset.id; dragContainer=e.currentTarget.dataset.container; e.currentTarget.classList.add('dragging'); }
+function handleDragOver(e) { e.preventDefault(); if(e.currentTarget.dataset.container===dragContainer) e.currentTarget.classList.add('drag-over'); }
+function handleDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
+function handleDragEnd() { document.querySelectorAll('.rank-item').forEach(i=>i.classList.remove('dragging','drag-over')); }
+function handleDrop(e) {
+  e.preventDefault();
+  const targetId=e.currentTarget.dataset.id, cid=e.currentTarget.dataset.container;
+  if(cid!==dragContainer||draggedId===targetId) return;
+  let arr = cid==='rankList' ? selfRanking : peerRanking;
+  let src = cid==='rankList' ? ideas : peerIdeas;
+  const fi=arr.indexOf(draggedId), ti=arr.indexOf(targetId);
+  arr.splice(fi,1); arr.splice(ti,0,draggedId);
+  if(cid==='rankList') selfRanking=arr; else peerRanking=arr;
+  renderRankList(cid, arr, src);
+}
+
+// Submit own ideas
+async function submitOwnIdeas() {
+  const genTime = Date.now() - startTime;
+  if (supabase) {
+    await sbInsert('participants', [{id:participantId, session_id:sessionId, created_at:new Date().toISOString(), generation_time_ms:genTime}]);
+    const rows = selfRanking.map((id,idx) => {
+      const idea = ideas.find(i=>i.id===id);
+      return {id:idea.id, participant_id:participantId, text:idea.text, self_rank:idx+1, created_at:new Date(idea.timestamp).toISOString(), review_count:0};
+    });
+    await sbInsert('ideas', rows);
+    await loadPeerIdeas();
+  } else {
+    loadDemoPeerIdeas();
+  }
+  showStep(2);
+}
+
+async function loadPeerIdeas() {
+  let result = await sbRpc('get_ideas_for_review', {reviewer_id:participantId, n:PEER_COUNT});
+  if (!result||result.length===0) result = await sbSelect('ideas',`participant_id=neq.${participantId}&order=review_count.asc&limit=${PEER_COUNT}`);
+  if (result&&result.length>0) {
+    peerIdeas = result.map(r=>({id:r.id, text:r.text, participant_id:r.participant_id}));
+  } else { loadDemoPeerIdeas(); }
+  renderPeerIdeas();
+}
+
+function loadDemoPeerIdeas() {
+  const demo = [
+    "Record every lecture and make recordings available within 2 hours, with AI-generated chapter markers and searchable transcripts.",
+    "Replace the last 15 minutes of each lecture with a live Q&A where students submit questions anonymously via their phones.",
+    "Introduce mid-semester 'lecture audits' where a small student panel gives structured feedback to the professor, who then adjusts the remaining sessions.",
+    "Let students vote on the pace: at three points during a lecture, a quick poll asks 'too fast / just right / too slow' and the professor adapts in real time.",
+    "Pair each large lecture with a weekly 20-person workshop where students solve problems together, with the professor rotating between groups.",
+    "Provide a one-page 'lecture map' before each session showing the key concepts, how they connect, and what to read beforehand.",
+    "Have two professors co-teach a lecture, debating different perspectives on the topic to model critical thinking.",
+    "Create a 'lecture lab' room with round tables instead of rows, whiteboards on every wall, and no fixed podium — forcing interactive formats."
+  ];
+  const shuffled = demo.sort(()=>Math.random()-.5).slice(0, PEER_COUNT);
+  peerIdeas = shuffled.map(text=>({id:crypto.randomUUID(), text, participant_id:'demo'}));
+  renderPeerIdeas();
+}
+
+// Phase 3: Peer Evaluation
+function renderPeerIdeas() {
+  document.getElementById('peerIdeas').innerHTML = peerIdeas.map((idea,idx) => `
+    <div class="peer-idea-card" id="peer-${idea.id}">
+      <div class="idea-label">Idea ${idx+1} of ${PEER_COUNT}</div>
+      <div class="idea-content">${escHtml(idea.text)}</div>
+      <div class="rating-row">
+        <div class="rating-group"><label>Originality</label><div class="star-row">
+          ${[1,2,3,4,5].map(v=>`<button class="star-btn" data-idea="${idea.id}" data-dim="originality" data-val="${v}" onclick="ratePeer(this)">${v}</button>`).join('')}
+        </div></div>
+        <div class="rating-group"><label>Feasibility</label><div class="star-row">
+          ${[1,2,3,4,5].map(v=>`<button class="star-btn" data-idea="${idea.id}" data-dim="feasibility" data-val="${v}" onclick="ratePeer(this)">${v}</button>`).join('')}
+        </div></div>
+      </div>
+    </div>`).join('');
+  peerRanking = peerIdeas.map(i=>i.id);
+  renderRankList('peerRankList', peerRanking, peerIdeas);
+  checkPeerComplete();
+}
+
+function ratePeer(btn) {
+  const {idea,dim,val} = btn.dataset;
+  if (!peerRatings[idea]) peerRatings[idea]={};
+  peerRatings[idea][dim] = parseInt(val);
+  document.getElementById(`peer-${idea}`).querySelectorAll(`.star-btn[data-dim="${dim}"]`).forEach(b => {
+    b.classList.toggle('selected', parseInt(b.dataset.val)<=parseInt(val));
+  });
+  checkPeerComplete();
+}
+
+function checkPeerComplete() {
+  const allRated = peerIdeas.every(i=>peerRatings[i.id]&&peerRatings[i.id].originality&&peerRatings[i.id].feasibility);
+  document.getElementById('peerRankSection').classList.toggle('hidden', !allRated);
+  document.getElementById('submitPeerBtn').disabled = !allRated;
+}
+
+// Submit peer evaluation
+async function submitPeerEval() {
+  if (supabase) {
+    const reviews = peerRanking.map((id,idx)=>({
+      id:crypto.randomUUID(), idea_id:id, reviewer_id:participantId,
+      originality:peerRatings[id].originality, feasibility:peerRatings[id].feasibility,
+      peer_rank:idx+1, created_at:new Date().toISOString()
+    }));
+    await sbInsert('reviews', reviews);
+    for (const id of peerRanking) await sbRpc('increment_review_count',{idea_uuid:id});
+  }
+  document.getElementById('sessionInfo').textContent = `Session: ${sessionId.slice(0,8)}`;
+  showStep(3);
+}
+
+// Utils
+function escHtml(s) { const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+function showToast(msg) { const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
+</script>
+</body>
+</html>

@@ -225,28 +225,31 @@ let sessionId = crypto.randomUUID();
 let startTime = Date.now();
 let supabase = null;
 
-// Supabase helpers
-function saveConfig() {
-  const url = document.getElementById('cfgUrl').value.trim();
-  const key = document.getElementById('cfgKey').value.trim();
-  if (!url || !key) { showToast('Please fill both fields'); return; }
-  localStorage.setItem('sb_url', url);
-  localStorage.setItem('sb_key', key);
-  initSupabase(url, key);
-}
+const SB_URL = 'https://uyynxszpmtwfxmnwirjn.supabase.co';
+const SB_KEY = 'sb_publishable_urtblTmp0Y9ikKCBm-Forg_azXo9iQ6';
+
 function initSupabase(url, key) {
   supabase = { url: url.replace(/\/$/, ''), key };
-  showToast('Connected to Supabase');
+  console.log('[Supabase] connected to', url);
 }
 async function sbInsert(table, rows) {
-  if (!supabase) return null;
+  if (!supabase) { console.warn('No supabase'); return null; }
   try {
     const res = await fetch(`${supabase.url}/rest/v1/${table}`, {
-      method:'POST', headers:{'Content-Type':'application/json','apikey':supabase.key,'Authorization':`Bearer ${supabase.key}`,'Prefer':'return=representation'},
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'apikey':supabase.key,
+        'Authorization':`Bearer ${supabase.key}`,
+        'Prefer':'return=representation'
+      },
       body:JSON.stringify(rows)
     });
-    return await res.json();
-  } catch(e) { console.error(e); return null; }
+    const text = await res.text();
+    console.log(`[sbInsert] ${table} → ${res.status}:`, text.slice(0, 500));
+    if (!res.ok) { showToast('Error saving: ' + res.status); return null; }
+    return JSON.parse(text);
+  } catch(e) { console.error('[sbInsert] error:', e); showToast('Connection error'); return null; }
 }
 async function sbSelect(table, query='') {
   if (!supabase) return null;
@@ -254,17 +257,24 @@ async function sbSelect(table, query='') {
     const res = await fetch(`${supabase.url}/rest/v1/${table}?${query}`, {
       headers:{'apikey':supabase.key,'Authorization':`Bearer ${supabase.key}`}
     });
-    return await res.json();
+    const text = await res.text();
+    console.log(`[sbSelect] ${table} → ${res.status}:`, text.slice(0, 300));
+    if (!res.ok) return null;
+    return JSON.parse(text);
   } catch(e) { console.error(e); return null; }
 }
 async function sbRpc(fn, params) {
   if (!supabase) return null;
   try {
     const res = await fetch(`${supabase.url}/rest/v1/rpc/${fn}`, {
-      method:'POST', headers:{'Content-Type':'application/json','apikey':supabase.key,'Authorization':`Bearer ${supabase.key}`},
+      method:'POST',
+      headers:{'Content-Type':'application/json','apikey':supabase.key,'Authorization':`Bearer ${supabase.key}`},
       body:JSON.stringify(params)
     });
-    return await res.json();
+    const text = await res.text();
+    console.log(`[sbRpc] ${fn} → ${res.status}:`, text.slice(0, 300));
+    if (!res.ok) return null;
+    return JSON.parse(text);
   } catch(e) { console.error(e); return null; }
 }
 

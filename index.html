@@ -241,14 +241,14 @@ async function sbInsert(table, rows) {
         'Content-Type':'application/json',
         'apikey':supabase.key,
         'Authorization':`Bearer ${supabase.key}`,
-        'Prefer':'return=representation'
+        'Prefer':'return=representation,resolution=ignore-duplicates'
       },
       body:JSON.stringify(rows)
     });
     const text = await res.text();
     console.log(`[sbInsert] ${table} → ${res.status}:`, text.slice(0, 500));
     if (!res.ok) { showToast('Error saving: ' + res.status); return null; }
-    return JSON.parse(text);
+    return text ? JSON.parse(text) : null;
   } catch(e) { console.error('[sbInsert] error:', e); showToast('Connection error'); return null; }
 }
 async function sbSelect(table, query='') {
@@ -271,10 +271,10 @@ async function sbRpc(fn, params) {
       headers:{'Content-Type':'application/json','apikey':supabase.key,'Authorization':`Bearer ${supabase.key}`},
       body:JSON.stringify(params)
     });
-    const text = await res.text();
-    console.log(`[sbRpc] ${fn} → ${res.status}:`, text.slice(0, 300));
+    console.log(`[sbRpc] ${fn} → ${res.status}`);
     if (!res.ok) return null;
-    return JSON.parse(text);
+    const text = await res.text();
+    return text ? JSON.parse(text) : null;
   } catch(e) { console.error(e); return null; }
 }
 

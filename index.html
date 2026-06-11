@@ -1,656 +1,450 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Idea Friction — Host Dashboard</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Idea Friction</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 <style>
   :root {
-    --bg:#f0f2f5; --card:#fff; --primary:#2563eb; --primary-hover:#1d4ed8;
-    --accent:#10b981; --danger:#ef4444; --warn:#f59e0b;
-    --text:#1e293b; --muted:#64748b; --border:#e2e8f0; --radius:12px;
-    --sidebar:240px;
+    --bg: #f8f9fb; --card: #ffffff; --primary: #2563eb; --primary-hover: #1d4ed8;
+    --accent: #10b981; --danger: #ef4444; --text: #1e293b; --muted: #64748b;
+    --border: #e2e8f0; --radius: 12px;
   }
-  *{margin:0;padding:0;box-sizing:border-box;}
-  body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;}
-
-  /* Sidebar */
-  .sidebar{width:var(--sidebar);background:#1e293b;color:#fff;display:flex;flex-direction:column;flex-shrink:0;position:fixed;top:0;left:0;height:100vh;z-index:50;}
-  .sidebar-logo{padding:24px 20px 16px;border-bottom:1px solid rgba(255,255,255,.1);}
-  .sidebar-logo h1{font-size:18px;font-weight:700;letter-spacing:-.3px;}
-  .sidebar-logo h1 span{color:#60a5fa;}
-  .sidebar-logo p{font-size:11px;color:#94a3b8;margin-top:2px;}
-  .sidebar-nav{flex:1;padding:16px 0;}
-  .nav-item{display:flex;align-items:center;gap:10px;padding:10px 20px;font-size:13px;font-weight:500;color:#94a3b8;cursor:pointer;border-left:3px solid transparent;transition:all .15s;}
-  .nav-item:hover{color:#fff;background:rgba(255,255,255,.05);}
-  .nav-item.active{color:#fff;background:rgba(96,165,250,.1);border-left-color:#60a5fa;}
-  .nav-item .icon{font-size:16px;width:20px;text-align:center;}
-  .sidebar-footer{padding:16px 20px;border-top:1px solid rgba(255,255,255,.1);}
-  .conn-status{display:flex;align-items:center;gap:8px;font-size:12px;color:#94a3b8;}
-  .conn-dot{width:8px;height:8px;border-radius:50%;background:#ef4444;flex-shrink:0;}
-  .conn-dot.connected{background:#10b981;}
-
-  /* Main */
-  .main{margin-left:var(--sidebar);flex:1;display:flex;flex-direction:column;}
-  .topbar{background:#fff;border-bottom:1px solid var(--border);padding:0 32px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:40;}
-  .topbar h2{font-size:16px;font-weight:600;}
-  .topbar-actions{display:flex;gap:8px;align-items:center;}
-  .content{padding:28px 32px;flex:1;}
-
-  /* Cards */
-  .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:0 1px 3px rgba(0,0,0,.04);}
-  .card-title{font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
-  .card-value{font-size:32px;font-weight:700;line-height:1.1;}
-  .card-sub{font-size:12px;color:var(--muted);margin-top:4px;}
-
-  /* Stat grid */
-  .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
-
-  /* Buttons */
-  .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border:none;border-radius:8px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;}
-  .btn-primary{background:var(--primary);color:#fff;}
-  .btn-primary:hover{background:var(--primary-hover);}
-  .btn-outline{background:transparent;color:var(--primary);border:1px solid var(--primary);}
-  .btn-outline:hover{background:rgba(37,99,235,.05);}
-  .btn-danger{background:transparent;color:var(--danger);border:1px solid var(--danger);}
-  .btn-danger:hover{background:rgba(239,68,68,.05);}
-  .btn-sm{padding:6px 12px;font-size:12px;}
-  .btn:disabled{opacity:.4;cursor:not-allowed;}
-
-  /* Table */
-  .table-wrap{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--border);}
-  table{width:100%;border-collapse:collapse;font-size:13px;}
-  thead{background:#f8fafc;}
-  th{padding:10px 16px;text-align:left;font-weight:600;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--border);}
-  td{padding:12px 16px;border-bottom:1px solid var(--border);vertical-align:top;}
-  tr:last-child td{border-bottom:none;}
-  tr:hover td{background:#f8fafc;}
-  .badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;}
-  .badge-green{background:#dcfce7;color:#166534;}
-  .badge-blue{background:#dbeafe;color:#1e40af;}
-  .badge-amber{background:#fef3c7;color:#92400e;}
-  .badge-red{background:#fee2e2;color:#991b1b;}
-
-  /* Rank pill */
-  .rank-pill{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:6px;font-size:11px;font-weight:700;}
-  .rank-1{background:#fef3c7;color:#92400e;}
-  .rank-2{background:#e2e8f0;color:#475569;}
-  .rank-3{background:#fed7aa;color:#9a3412;}
-  .rank-n{background:#f1f5f9;color:#64748b;}
-
-  /* Tabs */
-  .tabs{display:flex;gap:4px;margin-bottom:20px;background:#f1f5f9;padding:4px;border-radius:8px;width:fit-content;}
-  .tab{padding:6px 16px;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;color:var(--muted);border:none;background:transparent;transition:all .15s;}
-  .tab.active{background:#fff;color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.1);}
-
-  /* Config form */
-  .form-group{margin-bottom:16px;}
-  .form-group label{display:block;font-size:13px;font-weight:500;color:var(--muted);margin-bottom:6px;}
-  .form-group input{width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:14px;outline:none;transition:border .2s;}
-  .form-group input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.1);}
-  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
-
-  /* Alert */
-  .alert{padding:12px 16px;border-radius:8px;font-size:13px;margin-bottom:16px;line-height:1.5;}
-  .alert-warn{background:#fef3c7;border:1px solid #fde68a;color:#92400e;}
-  .alert-success{background:#dcfce7;border:1px solid #bbf7d0;color:#166534;}
-  .alert-info{background:#dbeafe;border:1px solid #bfdbfe;color:#1e40af;}
-
-  /* Modal */
-  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;display:flex;align-items:center;justify-content:center;}
-  .modal{background:#fff;border-radius:var(--radius);padding:28px;width:480px;max-width:90vw;box-shadow:0 20px 60px rgba(0,0,0,.2);}
-  .modal h3{font-size:18px;font-weight:700;margin-bottom:8px;}
-  .modal p{font-size:14px;color:var(--muted);margin-bottom:20px;line-height:1.5;}
-  .modal-actions{display:flex;gap:8px;justify-content:flex-end;}
-  .hidden{display:none!important;}
-
-  /* Idea text cell */
-  .idea-cell{max-width:320px;line-height:1.4;}
-
-  /* Progress bar mini */
-  .mini-bar{height:6px;background:#e2e8f0;border-radius:99px;overflow:hidden;margin-top:6px;}
-  .mini-bar-fill{height:100%;background:var(--accent);border-radius:99px;transition:width .4s;}
-
-  /* Empty state */
-  .empty{text-align:center;padding:48px 24px;color:var(--muted);}
-  .empty .empty-icon{font-size:40px;margin-bottom:12px;}
-  .empty p{font-size:14px;}
-
-  /* Toast */
-  .toast{position:fixed;bottom:24px;right:24px;background:#1e293b;color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;z-index:200;opacity:0;transition:opacity .3s;pointer-events:none;}
-  .toast.show{opacity:1;}
-
-  /* Calibration chart */
-  .calib-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;}
-  .corr-value{font-size:48px;font-weight:700;color:var(--primary);}
-  .corr-label{font-size:13px;color:var(--muted);margin-top:4px;}
-
-  @media(max-width:900px){
-    .stat-grid{grid-template-columns:repeat(2,1fr);}
-    .calib-grid{grid-template-columns:1fr;}
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+  .progress-bar { position:fixed; top:0; left:0; width:100%; height:4px; background:var(--border); z-index:100; }
+  .progress-fill { height:100%; background:linear-gradient(90deg,var(--primary),var(--accent)); transition:width .4s ease; }
+  .container { max-width:720px; margin:0 auto; padding:40px 24px 80px; }
+  .logo { text-align:center; margin-bottom:32px; }
+  .logo h1 { font-size:28px; font-weight:700; letter-spacing:-0.5px; }
+  .logo h1 span { color:var(--primary); }
+  .card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:32px; margin-bottom:24px; box-shadow:0 1px 3px rgba(0,0,0,.04); }
+  .card h2 { font-size:20px; font-weight:600; margin-bottom:4px; }
+  .card .subtitle { color:var(--muted); font-size:14px; margin-bottom:24px; line-height:1.5; }
+  .steps { display:flex; gap:8px; margin-bottom:32px; justify-content:center; }
+  .step-dot { width:10px; height:10px; border-radius:50%; background:var(--border); transition:all .3s; }
+  .step-dot.active { background:var(--primary); transform:scale(1.3); }
+  .step-dot.done { background:var(--accent); }
+  input[type="text"], textarea {
+    width:100%; padding:12px 16px; border:1px solid var(--border); border-radius:8px;
+    font-family:inherit; font-size:14px; transition:border .2s; outline:none; resize:vertical;
+  }
+  input:focus, textarea:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(37,99,235,.1); }
+  label { display:block; font-size:13px; font-weight:500; color:var(--muted); margin-bottom:6px; }
+  .btn {
+    display:inline-flex; align-items:center; gap:8px; padding:12px 24px; border:none;
+    border-radius:8px; font-family:inherit; font-size:14px; font-weight:600;
+    cursor:pointer; transition:all .2s;
+  }
+  .btn-primary { background:var(--primary); color:#fff; }
+  .btn-primary:hover { background:var(--primary-hover); transform:translateY(-1px); }
+  .btn-primary:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+  .btn-outline { background:transparent; color:var(--primary); border:1px solid var(--primary); }
+  .btn-outline:hover { background:rgba(37,99,235,.05); }
+  .btn-sm { padding:8px 14px; font-size:13px; }
+  .btn-block { width:100%; justify-content:center; }
+  .actions { display:flex; gap:12px; justify-content:flex-end; margin-top:24px; }
+  .idea-item {
+    display:flex; align-items:flex-start; gap:12px; padding:16px;
+    border:1px solid var(--border); border-radius:8px; margin-bottom:8px;
+    background:#fafbfc; transition:all .2s;
+  }
+  .idea-item:hover { border-color:#cbd5e1; }
+  .idea-number {
+    min-width:28px; height:28px; border-radius:50%; background:var(--primary);
+    color:#fff; display:flex; align-items:center; justify-content:center;
+    font-size:12px; font-weight:700; flex-shrink:0;
+  }
+  .idea-text { flex:1; font-size:14px; line-height:1.5; }
+  .idea-actions button {
+    width:28px; height:28px; border:none; background:transparent;
+    cursor:pointer; border-radius:6px; font-size:16px; color:var(--muted);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .idea-actions button:hover { background:var(--border); }
+  .rank-item {
+    display:flex; align-items:center; gap:12px; padding:16px;
+    border:2px solid var(--border); border-radius:8px; margin-bottom:8px;
+    background:#fff; cursor:grab; transition:all .2s; user-select:none;
+  }
+  .rank-item:active { cursor:grabbing; }
+  .rank-item.dragging { opacity:.5; border-color:var(--primary); }
+  .rank-item.drag-over { border-color:var(--accent); background:#f0fdf4; }
+  .rank-badge {
+    min-width:32px; height:32px; border-radius:8px; display:flex;
+    align-items:center; justify-content:center; font-weight:700; font-size:14px; flex-shrink:0;
+  }
+  .rank-badge.gold { background:#fef3c7; color:#92400e; }
+  .rank-badge.silver { background:#e2e8f0; color:#475569; }
+  .rank-badge.bronze { background:#fed7aa; color:#9a3412; }
+  .rank-badge.r4 { background:#e0e7ff; color:#3730a3; }
+  .rank-badge.r5 { background:#f1f5f9; color:#64748b; }
+  .rank-text { flex:1; font-size:14px; line-height:1.5; }
+  .drag-handle { color:var(--muted); font-size:18px; flex-shrink:0; }
+  .peer-idea-card {
+    border:2px solid var(--border); border-radius:var(--radius); padding:24px;
+    margin-bottom:16px; background:#fff;
+  }
+  .peer-idea-card .idea-label { font-size:12px; font-weight:600; color:var(--primary); text-transform:uppercase; letter-spacing:.5px; margin-bottom:8px; }
+  .peer-idea-card .idea-content { font-size:15px; line-height:1.6; margin-bottom:16px; }
+  .rating-row { display:flex; gap:16px; flex-wrap:wrap; }
+  .rating-group { flex:1; min-width:140px; }
+  .rating-group label { margin-bottom:8px; }
+  .star-row { display:flex; gap:4px; }
+  .star-btn {
+    width:36px; height:36px; border:1px solid var(--border); border-radius:6px;
+    background:#fff; cursor:pointer; font-size:14px; font-weight:600;
+    color:var(--muted); transition:all .15s; display:flex; align-items:center; justify-content:center;
+  }
+  .star-btn:hover { border-color:var(--primary); color:var(--primary); }
+  .star-btn.selected { background:var(--primary); color:#fff; border-color:var(--primary); }
+  .counter { text-align:right; font-size:13px; color:var(--muted); margin-top:8px; }
+  .thank-you { text-align:center; padding:48px 24px; }
+  .thank-you .icon { font-size:64px; margin-bottom:16px; }
+  .thank-you h2 { font-size:24px; margin-bottom:8px; }
+  .thank-you p { color:var(--muted); line-height:1.6; }
+  .hidden { display:none !important; }
+  .toast {
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+    background:#1e293b; color:#fff; padding:12px 24px; border-radius:8px;
+    font-size:14px; z-index:200; opacity:0; transition:opacity .3s; pointer-events:none;
+  }
+  .toast.show { opacity:1; }
+  .config-panel {
+    background:#fefce8; border:1px solid #fde68a; border-radius:8px;
+    padding:16px; margin-bottom:24px; font-size:13px;
+  }
+  .config-panel summary { cursor:pointer; font-weight:600; color:#92400e; }
+  .config-panel .config-fields { margin-top:12px; display:flex; flex-direction:column; gap:8px; }
+  .config-panel input { font-size:13px; padding:8px 12px; }
+  .session-info {
+    text-align:center; font-size:12px; color:var(--muted); margin-top:16px;
+    padding:8px; background:#f1f5f9; border-radius:6px;
+  }
+  @media(max-width:600px) {
+    .container { padding:24px 16px 60px; }
+    .card { padding:20px; }
+    .rating-row { flex-direction:column; gap:12px; }
   }
 </style>
 </head>
 <body>
 
-<!-- Sidebar -->
-<aside class="sidebar">
-  <div class="sidebar-logo">
-    <h1><span>Idea</span> Friction</h1>
-    <p>Host Dashboard</p>
-  </div>
-  <nav class="sidebar-nav">
-    <div class="nav-item active" onclick="showPage('overview')" id="nav-overview">
-      <span class="icon">📊</span> Overview
-    </div>
-    <div class="nav-item" onclick="showPage('ideas')" id="nav-ideas">
-      <span class="icon">💡</span> Ideas
-    </div>
-    <div class="nav-item" onclick="showPage('reviews')" id="nav-reviews">
-      <span class="icon">🔍</span> Peer Rankings
-    </div>
-    <div class="nav-item" onclick="showPage('calibration')" id="nav-calibration">
-      <span class="icon">🎯</span> Calibration
-    </div>
-    <div class="nav-item" onclick="showPage('settings')" id="nav-settings">
-      <span class="icon">⚙️</span> Settings
-    </div>
-  </nav>
-  <div class="sidebar-footer">
-    <div class="conn-status">
-      <div class="conn-dot" id="connDot"></div>
-      <span id="connLabel">Not connected</span>
-    </div>
-  </div>
-</aside>
-
-<!-- Main -->
-<div class="main">
-  <div class="topbar">
-    <h2 id="pageTitle">Overview</h2>
-    <div class="topbar-actions">
-      <button class="btn btn-outline btn-sm" onclick="refreshAll()">↻ Refresh</button>
-      <button class="btn btn-outline btn-sm" onclick="exportCSV()">⬇ Export CSV</button>
-      <button class="btn btn-danger btn-sm" onclick="openResetModal()">🗑 Reset Data</button>
-    </div>
-  </div>
-
-  <div class="content">
-
-    <!-- OVERVIEW -->
-    <div id="page-overview" class="page">
-      <div class="stat-grid">
-        <div class="card">
-          <div class="card-title">Participants</div>
-          <div class="card-value" id="stat-participants">—</div>
-          <div class="card-sub">completed all steps</div>
-        </div>
-        <div class="card">
-          <div class="card-title">Ideas submitted</div>
-          <div class="card-value" id="stat-ideas">—</div>
-          <div class="card-sub">across all participants</div>
-        </div>
-        <div class="card">
-          <div class="card-title">Peer rankings</div>
-          <div class="card-value" id="stat-reviews">—</div>
-          <div class="card-sub">total review events</div>
-        </div>
-        <div class="card">
-          <div class="card-title">Coverage</div>
-          <div class="card-value" id="stat-coverage">—</div>
-          <div class="card-sub">ideas with ≥3 reviews</div>
-          <div class="mini-bar"><div class="mini-bar-fill" id="stat-coverage-bar" style="width:0%"></div></div>
-        </div>
-      </div>
-
-      <div class="card" style="margin-bottom:24px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-          <div>
-            <div class="card-title">Top-ranked ideas</div>
-            <p style="font-size:12px;color:var(--muted);margin-top:2px;">By average peer rank (lower = better)</p>
-          </div>
-        </div>
-        <div id="top-ideas-list"><div class="empty"><div class="empty-icon">💡</div><p>No data yet</p></div></div>
-      </div>
-
-      <div class="card">
-        <div class="card-title" style="margin-bottom:16px;">Review coverage per idea</div>
-        <div id="coverage-list"><div class="empty"><div class="empty-icon">🔍</div><p>No data yet</p></div></div>
-      </div>
-    </div>
-
-    <!-- IDEAS -->
-    <div id="page-ideas" class="page hidden">
-      <div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-          <div class="card-title">All submitted ideas</div>
-          <button class="btn btn-outline btn-sm" onclick="exportTableCSV('ideas-table','ideas')">⬇ CSV</button>
-        </div>
-        <div class="table-wrap">
-          <table id="ideas-table">
-            <thead><tr>
-              <th>#</th><th>Idea</th><th>Self rank</th><th>Avg peer rank</th><th>Reviews</th><th>Participant</th>
-            </tr></thead>
-            <tbody id="ideas-tbody"><tr><td colspan="6"><div class="empty"><p>No data yet</p></div></td></tr></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- REVIEWS -->
-    <div id="page-reviews" class="page hidden">
-      <div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-          <div class="card-title">All peer rankings</div>
-          <button class="btn btn-outline btn-sm" onclick="exportTableCSV('reviews-table','reviews')">⬇ CSV</button>
-        </div>
-        <div class="table-wrap">
-          <table id="reviews-table">
-            <thead><tr>
-              <th>Idea (truncated)</th><th>Peer rank given</th><th>Reviewer</th><th>Time</th>
-            </tr></thead>
-            <tbody id="reviews-tbody"><tr><td colspan="4"><div class="empty"><p>No data yet</p></div></td></tr></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- CALIBRATION -->
-    <div id="page-calibration" class="page hidden">
-      <div class="alert alert-info">
-        <strong>Calibration</strong> measures whether participants can accurately judge the quality of their own ideas.
-        A strong negative correlation between self-rank and avg peer-rank means people correctly identify their best ideas
-        (self-rank 1 = best → should get lowest avg peer rank).
-      </div>
-      <div class="calib-grid">
-        <div class="card">
-          <div class="card-title">Overall calibration</div>
-          <div class="corr-value" id="calib-corr">—</div>
-          <div class="corr-label">Spearman ρ: self-rank vs avg peer-rank<br/>(negative = good calibration)</div>
-        </div>
-        <div class="card">
-          <div class="card-title">Interpretation</div>
-          <div id="calib-interp" style="font-size:14px;line-height:1.6;color:var(--muted);margin-top:8px;">Connect to Supabase and refresh to see results.</div>
-        </div>
-      </div>
-      <div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-          <div class="card-title">Per-participant calibration</div>
-          <button class="btn btn-outline btn-sm" onclick="exportTableCSV('calib-table','calibration')">⬇ CSV</button>
-        </div>
-        <div class="table-wrap">
-          <table id="calib-table">
-            <thead><tr>
-              <th>Participant</th><th>Ideas submitted</th><th>Self-rank #1 idea</th><th>Avg peer rank of #1</th><th>Calibration signal</th>
-            </tr></thead>
-            <tbody id="calib-tbody"><tr><td colspan="5"><div class="empty"><p>No data yet</p></div></td></tr></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- SETTINGS -->
-    <div id="page-settings" class="page hidden">
-      <div class="card" style="max-width:560px;">
-        <h3 style="font-size:16px;font-weight:600;margin-bottom:4px;">Supabase Connection</h3>
-        <p style="font-size:13px;color:var(--muted);margin-bottom:20px;">Connect to your Supabase project to load and manage data.</p>
-        <div class="form-group">
-          <label>Supabase Project URL</label>
-          <input type="text" id="cfg-url" placeholder="https://xxxxx.supabase.co"/>
-        </div>
-        <div class="form-group">
-          <label>Anon Public Key</label>
-          <input type="text" id="cfg-key" placeholder="eyJhbGciOi..."/>
-        </div>
-        <div style="display:flex;gap:8px;">
-          <button class="btn btn-primary" onclick="saveAndConnect()">Connect</button>
-          <button class="btn btn-outline" onclick="testConnection()">Test connection</button>
-        </div>
-        <div id="conn-result" style="margin-top:12px;"></div>
-      </div>
-
-      <div class="card" style="max-width:560px;margin-top:16px;">
-        <h3 style="font-size:16px;font-weight:600;margin-bottom:4px;">Danger Zone</h3>
-        <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">Permanently delete all collected data. This cannot be undone.</p>
-        <button class="btn btn-danger" onclick="openResetModal()">🗑 Reset all data</button>
-      </div>
-    </div>
-
-  </div>
-</div>
-
-<!-- Reset Modal -->
-<div class="modal-overlay hidden" id="resetModal">
-  <div class="modal">
-    <h3>Reset all data?</h3>
-    <p>This will permanently delete all participants, ideas, and peer rankings from the database. This action cannot be undone.</p>
-    <div class="modal-actions">
-      <button class="btn btn-outline" onclick="closeResetModal()">Cancel</button>
-      <button class="btn btn-danger" onclick="confirmReset()">Yes, delete everything</button>
-    </div>
-  </div>
-</div>
-
+<div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
 <div class="toast" id="toast"></div>
 
-<script>
-// ── State ──────────────────────────────────────────────────
-let sb = null;
-let allIdeas = [];
-let allReviews = [];
-let allParticipants = [];
+<div class="container">
+  <div class="logo">
+    <h1><span>Idea</span> Friction</h1>
+  </div>
 
-// ── Supabase ───────────────────────────────────────────────
-function saveAndConnect() {
-  const url = document.getElementById('cfg-url').value.trim();
-  const key = document.getElementById('cfg-key').value.trim();
-  if (!url || !key) { showToast('Fill in both fields'); return; }
+  <div class="steps" id="stepDots"></div>
+
+  <!-- STEP 0: Idea Generation (start here directly) -->
+  <div id="step0" class="step-content">
+    <div class="card">
+      <h2>How would you improve lectures at your university? 💡</h2>
+      <p class="subtitle">
+        Think about this lecture or others you attend — what would make them more engaging, more useful, or easier to learn from?
+        This could be anything: the format, the room, the materials, how professors teach, use of technology, interaction with students, etc.
+        Add up to 5 ideas.
+      </p>
+
+      <div id="ideaList"></div>
+
+      <div id="ideaInput" style="margin-top:16px;">
+        <textarea id="newIdea" rows="3" placeholder="Type your idea here..." maxlength="500"></textarea>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
+          <span class="counter" id="ideaCounter">0 / 5 ideas</span>
+          <button class="btn btn-primary btn-sm" onclick="addIdea()" id="addIdeaBtn">+ Add Idea</button>
+        </div>
+      </div>
+    </div>
+
+    <details class="config-panel">
+      <summary>⚙️ Supabase Configuration (Admin)</summary>
+      <div class="config-fields">
+        <label>Supabase URL</label>
+        <input type="text" id="cfgUrl" placeholder="https://xxxxx.supabase.co" />
+        <label>Supabase Anon Key</label>
+        <input type="text" id="cfgKey" placeholder="eyJhbGciOi..." />
+        <button class="btn btn-primary btn-sm" onclick="saveConfig()">Save & Connect</button>
+        <p style="color:#92400e;margin-top:4px;">Without Supabase, the tool runs in <strong>local demo mode</strong>.</p>
+      </div>
+    </details>
+
+    <div class="actions">
+      <button class="btn btn-primary" onclick="goToRanking()" id="toRankBtn" disabled>Continue →</button>
+    </div>
+  </div>
+
+  <!-- STEP 1: Self-Ranking -->
+  <div id="step1" class="step-content hidden">
+    <div class="card">
+      <h2>Rank your ideas 🏆</h2>
+      <p class="subtitle">
+        Drag and drop to order your ideas from <strong>best (#1)</strong> to <strong>worst</strong>.
+        Which idea would have the biggest positive impact on lectures?
+      </p>
+      <div id="rankList"></div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-outline" onclick="showStep(0)">← Back</button>
+      <button class="btn btn-primary" onclick="submitOwnIdeas()">Continue →</button>
+    </div>
+  </div>
+
+  <!-- STEP 2: Peer Evaluation -->
+  <div id="step2" class="step-content hidden">
+    <div class="card">
+      <h2>Rank these ideas 🔍</h2>
+      <p class="subtitle">
+        Here are 5 ideas from other participants. Drag and drop to rank them from <strong>best (#1)</strong> to <strong>worst</strong>.
+        Which idea would have the biggest positive impact on lectures?
+      </p>
+      <div id="peerRankList"></div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-primary" onclick="submitPeerEval()">Submit →</button>
+    </div>
+  </div>
+
+  <!-- STEP 3: Thank You -->
+  <div id="step3" class="step-content hidden">
+    <div class="card thank-you">
+      <div class="icon">🎉</div>
+      <h2>Thank you!</h2>
+      <p>Your ideas and evaluations have been recorded.</p>
+      <div class="session-info" id="sessionInfo"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const TOTAL_STEPS = 4;
+const MAX_IDEAS = 5;
+const PEER_COUNT = 5;
+let currentStep = 0;
+let ideas = [];
+let selfRanking = [];
+let peerIdeas = [];
+let peerRatings = {};
+let peerRanking = [];
+let participantId = crypto.randomUUID();
+let sessionId = crypto.randomUUID();
+let startTime = Date.now();
+let supabase = null;
+
+// Supabase helpers
+function saveConfig() {
+  const url = document.getElementById('cfgUrl').value.trim();
+  const key = document.getElementById('cfgKey').value.trim();
+  if (!url || !key) { showToast('Please fill both fields'); return; }
   localStorage.setItem('sb_url', url);
   localStorage.setItem('sb_key', key);
-  connect(url, key);
+  initSupabase(url, key);
 }
-
-function connect(url, key) {
-  sb = { url: url.replace(/\/$/, ''), key };
-  document.getElementById('connDot').classList.add('connected');
-  document.getElementById('connLabel').textContent = 'Connected';
-  refreshAll();
+function initSupabase(url, key) {
+  supabase = { url: url.replace(/\/$/, ''), key };
+  showToast('Connected to Supabase');
 }
-
-async function testConnection() {
-  if (!sb) { showToast('Enter credentials first'); return; }
-  const res = await sbSelect('participants', 'limit=1');
-  const el = document.getElementById('conn-result');
-  if (res !== null) {
-    el.innerHTML = '<div class="alert alert-success">✅ Connection successful!</div>';
-  } else {
-    el.innerHTML = '<div class="alert alert-warn">❌ Could not connect. Check your URL and key.</div>';
-  }
-}
-
-async function sbSelect(table, query = '') {
-  if (!sb) return null;
+async function sbInsert(table, rows) {
+  if (!supabase) return null;
   try {
-    const res = await fetch(`${sb.url}/rest/v1/${table}?${query}`, {
-      headers: { 'apikey': sb.key, 'Authorization': `Bearer ${sb.key}` }
+    const res = await fetch(`${supabase.url}/rest/v1/${table}`, {
+      method:'POST', headers:{'Content-Type':'application/json','apikey':supabase.key,'Authorization':`Bearer ${supabase.key}`,'Prefer':'return=representation'},
+      body:JSON.stringify(rows)
     });
-    if (!res.ok) return null;
     return await res.json();
-  } catch(e) { return null; }
+  } catch(e) { console.error(e); return null; }
 }
-
-async function sbDelete(table) {
-  if (!sb) return null;
+async function sbSelect(table, query='') {
+  if (!supabase) return null;
   try {
-    await fetch(`${sb.url}/rest/v1/${table}?id=neq.00000000-0000-0000-0000-000000000000`, {
-      method: 'DELETE',
-      headers: { 'apikey': sb.key, 'Authorization': `Bearer ${sb.key}` }
+    const res = await fetch(`${supabase.url}/rest/v1/${table}?${query}`, {
+      headers:{'apikey':supabase.key,'Authorization':`Bearer ${supabase.key}`}
     });
-  } catch(e) {}
+    return await res.json();
+  } catch(e) { console.error(e); return null; }
+}
+async function sbRpc(fn, params) {
+  if (!supabase) return null;
+  try {
+    const res = await fetch(`${supabase.url}/rest/v1/rpc/${fn}`, {
+      method:'POST', headers:{'Content-Type':'application/json','apikey':supabase.key,'Authorization':`Bearer ${supabase.key}`},
+      body:JSON.stringify(params)
+    });
+    return await res.json();
+  } catch(e) { console.error(e); return null; }
 }
 
-// ── Data loading ───────────────────────────────────────────
-async function refreshAll() {
-  if (!sb) return;
-  showToast('Loading data…');
-  const [p, i, r] = await Promise.all([
-    sbSelect('participants', 'order=created_at.desc'),
-    sbSelect('ideas', 'order=created_at.desc'),
-    sbSelect('reviews', 'order=created_at.desc')
-  ]);
-  allParticipants = p || [];
-  allIdeas = i || [];
-  allReviews = r || [];
-  renderAll();
-  showToast('Data refreshed');
+// Navigation
+function showStep(n) {
+  currentStep = n;
+  document.querySelectorAll('.step-content').forEach((el,i) => el.classList.toggle('hidden', i!==n));
+  document.getElementById('progressFill').style.width = (n/(TOTAL_STEPS-1)*100)+'%';
+  renderDots();
+  window.scrollTo({top:0,behavior:'smooth'});
 }
-
-function renderAll() {
-  renderOverview();
-  renderIdeasTable();
-  renderReviewsTable();
-  renderCalibration();
-}
-
-// ── Overview ───────────────────────────────────────────────
-function renderOverview() {
-  document.getElementById('stat-participants').textContent = allParticipants.length;
-  document.getElementById('stat-ideas').textContent = allIdeas.length;
-  document.getElementById('stat-reviews').textContent = allReviews.length;
-
-  const covered = allIdeas.filter(i => (i.review_count || 0) >= 3).length;
-  const pct = allIdeas.length ? Math.round(covered / allIdeas.length * 100) : 0;
-  document.getElementById('stat-coverage').textContent = `${pct}%`;
-  document.getElementById('stat-coverage-bar').style.width = pct + '%';
-
-  // Top ideas by avg peer rank
-  const ideaStats = computeIdeaStats();
-  const sorted = ideaStats.filter(i => i.nReviews > 0).sort((a,b) => a.avgPeerRank - b.avgPeerRank).slice(0, 5);
-
-  const topEl = document.getElementById('top-ideas-list');
-  if (!sorted.length) {
-    topEl.innerHTML = '<div class="empty"><div class="empty-icon">💡</div><p>No peer rankings yet</p></div>';
-  } else {
-    topEl.innerHTML = sorted.map((idea, idx) => `
-      <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);">
-        <div class="rank-pill rank-${idx < 3 ? idx+1 : 'n'}">#${idx+1}</div>
-        <div style="flex:1;font-size:14px;line-height:1.4;">${escHtml(idea.text)}</div>
-        <div style="text-align:right;flex-shrink:0;">
-          <div style="font-size:13px;font-weight:600;">avg rank ${idea.avgPeerRank.toFixed(1)}</div>
-          <div style="font-size:11px;color:var(--muted);">${idea.nReviews} review${idea.nReviews!==1?'s':''}</div>
-        </div>
-      </div>`).join('');
-  }
-
-  // Coverage list
-  const covEl = document.getElementById('coverage-list');
-  if (!allIdeas.length) {
-    covEl.innerHTML = '<div class="empty"><div class="empty-icon">🔍</div><p>No ideas yet</p></div>';
-  } else {
-    const sorted2 = [...allIdeas].sort((a,b) => (b.review_count||0) - (a.review_count||0));
-    covEl.innerHTML = sorted2.map(idea => {
-      const cnt = idea.review_count || 0;
-      const pct = Math.min(cnt / 3 * 100, 100);
-      const badge = cnt >= 3 ? 'badge-green' : cnt >= 1 ? 'badge-amber' : 'badge-red';
-      return `<div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--border);">
-        <div style="flex:1;font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:400px;">${escHtml(idea.text)}</div>
-        <span class="badge ${badge}">${cnt} review${cnt!==1?'s':''}</span>
-        <div style="width:80px;"><div class="mini-bar"><div class="mini-bar-fill" style="width:${pct}%"></div></div></div>
-      </div>`;
-    }).join('');
+function renderDots() {
+  const c = document.getElementById('stepDots');
+  c.innerHTML = '';
+  for (let i=0;i<TOTAL_STEPS;i++) {
+    const d = document.createElement('div');
+    d.className = 'step-dot'+(i===currentStep?' active':'')+(i<currentStep?' done':'');
+    c.appendChild(d);
   }
 }
 
-// ── Ideas table ────────────────────────────────────────────
-function renderIdeasTable() {
-  const stats = computeIdeaStats();
-  const tbody = document.getElementById('ideas-tbody');
-  if (!stats.length) {
-    tbody.innerHTML = '<tr><td colspan="6"><div class="empty"><p>No ideas yet</p></div></td></tr>';
-    return;
-  }
-  tbody.innerHTML = stats.map((idea, idx) => `
-    <tr>
-      <td style="color:var(--muted);font-size:12px;">${idx+1}</td>
-      <td class="idea-cell">${escHtml(idea.text)}</td>
-      <td><div class="rank-pill rank-${idea.selfRank <= 3 ? idea.selfRank : 'n'}">#${idea.selfRank}</div></td>
-      <td>${idea.nReviews > 0 ? `<strong>${idea.avgPeerRank.toFixed(1)}</strong>` : '<span style="color:var(--muted)">—</span>'}</td>
-      <td><span class="badge ${idea.nReviews>=3?'badge-green':idea.nReviews>0?'badge-amber':'badge-red'}">${idea.nReviews}</span></td>
-      <td style="font-size:11px;color:var(--muted);font-family:monospace;">${idea.participantId.slice(0,8)}</td>
-    </tr>`).join('');
+// Phase 1: Idea Generation
+function addIdea() {
+  const input = document.getElementById('newIdea');
+  const text = input.value.trim();
+  if (!text) { showToast('Please type an idea first'); return; }
+  if (ideas.length >= MAX_IDEAS) { showToast('Maximum 5 ideas reached'); return; }
+  ideas.push({id:crypto.randomUUID(), text, timestamp:Date.now()});
+  input.value = '';
+  renderIdeas();
+  input.focus();
+}
+function removeIdea(id) {
+  ideas = ideas.filter(i=>i.id!==id);
+  renderIdeas();
+}
+function renderIdeas() {
+  document.getElementById('ideaList').innerHTML = ideas.map((idea,idx) => `
+    <div class="idea-item">
+      <div class="idea-number">${idx+1}</div>
+      <div class="idea-text">${escHtml(idea.text)}</div>
+      <div class="idea-actions"><button onclick="removeIdea('${idea.id}')" title="Remove">&#10005;</button></div>
+    </div>`).join('');
+  document.getElementById('ideaCounter').textContent = `${ideas.length} / ${MAX_IDEAS} ideas`;
+  document.getElementById('toRankBtn').disabled = ideas.length < 2;
+  document.getElementById('addIdeaBtn').disabled = ideas.length >= MAX_IDEAS;
+  document.getElementById('newIdea').disabled = ideas.length >= MAX_IDEAS;
 }
 
-// ── Reviews table ──────────────────────────────────────────
-function renderReviewsTable() {
-  const tbody = document.getElementById('reviews-tbody');
-  if (!allReviews.length) {
-    tbody.innerHTML = '<tr><td colspan="4"><div class="empty"><p>No peer rankings yet</p></div></td></tr>';
-    return;
-  }
-  tbody.innerHTML = allReviews.map(r => {
-    const idea = allIdeas.find(i => i.id === r.idea_id);
-    const text = idea ? idea.text.slice(0, 60) + (idea.text.length > 60 ? '…' : '') : r.idea_id.slice(0,8);
-    const d = new Date(r.created_at);
-    return `<tr>
-      <td class="idea-cell">${escHtml(text)}</td>
-      <td><div class="rank-pill rank-${r.peer_rank <= 3 ? r.peer_rank : 'n'}">#${r.peer_rank}</div></td>
-      <td style="font-size:11px;color:var(--muted);font-family:monospace;">${r.reviewer_id.slice(0,8)}</td>
-      <td style="font-size:12px;color:var(--muted);">${d.toLocaleDateString()} ${d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</td>
-    </tr>`;
-  }).join('');
-}
-
-// ── Calibration ────────────────────────────────────────────
-function renderCalibration() {
-  const stats = computeIdeaStats().filter(i => i.nReviews > 0);
-  const tbody = document.getElementById('calib-tbody');
-
-  if (!stats.length) {
-    tbody.innerHTML = '<tr><td colspan="5"><div class="empty"><p>No data yet</p></div></td></tr>';
-    document.getElementById('calib-corr').textContent = '—';
-    return;
-  }
-
-  // Overall Spearman correlation (self_rank vs avg_peer_rank)
-  const rho = spearman(stats.map(i => i.selfRank), stats.map(i => i.avgPeerRank));
-  document.getElementById('calib-corr').textContent = isNaN(rho) ? '—' : rho.toFixed(2);
-
-  const interpEl = document.getElementById('calib-interp');
-  if (isNaN(rho)) {
-    interpEl.textContent = 'Not enough data to compute correlation.';
-  } else if (rho < -0.4) {
-    interpEl.innerHTML = '<span style="color:#166534;font-weight:600;">Strong calibration ✅</span><br/>Participants are good at identifying their best ideas — self-rankings align well with peer judgments.';
-  } else if (rho < 0) {
-    interpEl.innerHTML = '<span style="color:#92400e;font-weight:600;">Moderate calibration ⚠️</span><br/>Some alignment between self- and peer-rankings, but participants are not reliably identifying their best ideas.';
-  } else {
-    interpEl.innerHTML = '<span style="color:#991b1b;font-weight:600;">Poor calibration ❌</span><br/>Self-rankings do not predict peer rankings — participants struggle to assess the quality of their own ideas.';
-  }
-
-  // Per-participant table
-  const byParticipant = {};
-  stats.forEach(idea => {
-    if (!byParticipant[idea.participantId]) byParticipant[idea.participantId] = [];
-    byParticipant[idea.participantId].push(idea);
-  });
-
-  tbody.innerHTML = Object.entries(byParticipant).map(([pid, pidIdeas]) => {
-    const top = pidIdeas.find(i => i.selfRank === 1);
-    const nIdeas = pidIdeas.length;
-    const topAvgPeer = top ? top.avgPeerRank.toFixed(1) : '—';
-    const signal = top && top.nReviews > 0
-      ? (top.avgPeerRank <= 2 ? '<span class="badge badge-green">Good</span>' : top.avgPeerRank <= 3.5 ? '<span class="badge badge-amber">Mixed</span>' : '<span class="badge badge-red">Poor</span>')
-      : '<span class="badge">—</span>';
-    return `<tr>
-      <td style="font-size:11px;font-family:monospace;color:var(--muted);">${pid.slice(0,8)}</td>
-      <td>${nIdeas}</td>
-      <td style="font-size:13px;max-width:200px;">${top ? escHtml(top.text.slice(0,60))+'…' : '—'}</td>
-      <td>${topAvgPeer}</td>
-      <td>${signal}</td>
-    </tr>`;
-  }).join('');
-}
-
-// ── Helpers ────────────────────────────────────────────────
-function computeIdeaStats() {
-  return allIdeas.map(idea => {
-    const reviews = allReviews.filter(r => r.idea_id === idea.id);
-    const avgPeerRank = reviews.length ? reviews.reduce((s,r) => s + r.peer_rank, 0) / reviews.length : null;
-    return {
-      id: idea.id,
-      text: idea.text,
-      selfRank: idea.self_rank,
-      participantId: idea.participant_id,
-      nReviews: reviews.length,
-      avgPeerRank: avgPeerRank || 99
-    };
-  });
-}
-
-function spearman(xs, ys) {
-  const n = xs.length;
-  if (n < 2) return NaN;
-  const rank = arr => {
-    const sorted = [...arr].map((v,i)=>({v,i})).sort((a,b)=>a.v-b.v);
-    const ranks = new Array(n);
-    sorted.forEach((s,r) => ranks[s.i] = r+1);
-    return ranks;
-  };
-  const rx = rank(xs), ry = rank(ys);
-  const d2 = rx.reduce((s,_,i) => s + (rx[i]-ry[i])**2, 0);
-  return 1 - (6*d2)/(n*(n*n-1));
-}
-
-function escHtml(s) { const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
-
-// ── Navigation ─────────────────────────────────────────────
-function showPage(name) {
-  document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('page-'+name).classList.remove('hidden');
-  document.getElementById('nav-'+name).classList.add('active');
-  const titles = {overview:'Overview', ideas:'Ideas', reviews:'Peer Rankings', calibration:'Calibration', settings:'Settings'};
-  document.getElementById('pageTitle').textContent = titles[name];
-}
-
-// ── Export ─────────────────────────────────────────────────
-function exportCSV() {
-  const stats = computeIdeaStats();
-  const rows = [['idea_id','participant_id','text','self_rank','n_reviews','avg_peer_rank']];
-  stats.forEach(i => rows.push([i.id, i.participantId, `"${i.text.replace(/"/g,'""')}"`, i.selfRank, i.nReviews, i.avgPeerRank === 99 ? '' : i.avgPeerRank.toFixed(2)]));
-  downloadCSV(rows, 'idea_friction_export.csv');
-}
-
-function exportTableCSV(tableId, filename) {
-  const table = document.getElementById(tableId);
-  const rows = [];
-  table.querySelectorAll('tr').forEach(tr => {
-    rows.push([...tr.querySelectorAll('th,td')].map(c => `"${c.innerText.replace(/"/g,'""')}"`));
-  });
-  downloadCSV(rows, filename+'.csv');
-}
-
-function downloadCSV(rows, filename) {
-  const csv = rows.map(r => r.join(',')).join('\n');
-  const a = document.createElement('a');
-  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
-  a.download = filename;
-  a.click();
-}
-
-// ── Reset ──────────────────────────────────────────────────
-function openResetModal() { document.getElementById('resetModal').classList.remove('hidden'); }
-function closeResetModal() { document.getElementById('resetModal').classList.add('hidden'); }
-async function confirmReset() {
-  closeResetModal();
-  if (!sb) { showToast('Not connected to Supabase'); return; }
-  showToast('Deleting data…');
-  // Delete in FK order
-  await sbDelete('reviews');
-  await sbDelete('ideas');
-  await sbDelete('participants');
-  allIdeas=[]; allReviews=[]; allParticipants=[];
-  renderAll();
-  showToast('All data deleted');
-}
-
-// ── Toast ──────────────────────────────────────────────────
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2500);
-}
-
-// ── Init ───────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  const url = localStorage.getItem('sb_url'), key = localStorage.getItem('sb_key');
-  if (url && key) {
-    document.getElementById('cfg-url').value = url;
-    document.getElementById('cfg-key').value = key;
-    connect(url, key);
-  }
+  document.getElementById('newIdea').addEventListener('keydown', e => {
+    if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); addIdea(); }
+  });
+  // Auto-connect with hardcoded credentials
+  initSupabase('https://uyynxszpmtwfxmnwirjn.supabase.co', 'sb_publishable_urtblTmp0Y9ikKCBm-Forg_azXo9iQ6');
+  renderDots();
 });
+
+// Phase 2: Self-Ranking
+function goToRanking() {
+  if (ideas.length < 2) { showToast('Add at least 2 ideas'); return; }
+  selfRanking = ideas.map(i=>i.id).sort(()=>Math.random()-.5);
+  renderRankList('rankList', selfRanking, ideas);
+  showStep(1);
+}
+
+function badgeClass(idx) { return ['gold','silver','bronze','r4','r5'][idx] || 'r5'; }
+
+function renderRankList(containerId, orderArr, sourceArr) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = orderArr.map((id,idx) => {
+    const idea = sourceArr.find(i=>i.id===id);
+    return `<div class="rank-item" draggable="true" data-id="${id}" data-container="${containerId}">
+      <div class="drag-handle">&#10303;</div>
+      <div class="rank-badge ${badgeClass(idx)}">#${idx+1}</div>
+      <div class="rank-text">${escHtml(idea.text)}</div>
+    </div>`;
+  }).join('');
+  container.querySelectorAll('.rank-item').forEach(item => {
+    item.addEventListener('dragstart', handleDragStart);
+    item.addEventListener('dragover', handleDragOver);
+    item.addEventListener('drop', handleDrop);
+    item.addEventListener('dragend', handleDragEnd);
+    item.addEventListener('dragleave', handleDragLeave);
+  });
+}
+
+let draggedId=null, dragContainer=null;
+function handleDragStart(e) { draggedId=e.currentTarget.dataset.id; dragContainer=e.currentTarget.dataset.container; e.currentTarget.classList.add('dragging'); }
+function handleDragOver(e) { e.preventDefault(); if(e.currentTarget.dataset.container===dragContainer) e.currentTarget.classList.add('drag-over'); }
+function handleDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
+function handleDragEnd() { document.querySelectorAll('.rank-item').forEach(i=>i.classList.remove('dragging','drag-over')); }
+function handleDrop(e) {
+  e.preventDefault();
+  const targetId=e.currentTarget.dataset.id, cid=e.currentTarget.dataset.container;
+  if(cid!==dragContainer||draggedId===targetId) return;
+  let arr = cid==='rankList' ? selfRanking : peerRanking;
+  let src = cid==='rankList' ? ideas : peerIdeas;
+  const fi=arr.indexOf(draggedId), ti=arr.indexOf(targetId);
+  arr.splice(fi,1); arr.splice(ti,0,draggedId);
+  if(cid==='rankList') selfRanking=arr; else peerRanking=arr;
+  renderRankList(cid, arr, src);
+}
+
+// Submit own ideas
+async function submitOwnIdeas() {
+  const genTime = Date.now() - startTime;
+  if (supabase) {
+    await sbInsert('participants', [{id:participantId, session_id:sessionId, created_at:new Date().toISOString(), generation_time_ms:genTime}]);
+    const rows = selfRanking.map((id,idx) => {
+      const idea = ideas.find(i=>i.id===id);
+      return {id:idea.id, participant_id:participantId, text:idea.text, self_rank:idx+1, created_at:new Date(idea.timestamp).toISOString(), review_count:0};
+    });
+    await sbInsert('ideas', rows);
+    await loadPeerIdeas();
+  } else {
+    loadDemoPeerIdeas();
+  }
+  showStep(2);
+}
+
+async function loadPeerIdeas() {
+  let result = await sbRpc('get_ideas_for_review', {reviewer_id:participantId, n:PEER_COUNT});
+  if (!result||result.length===0) result = await sbSelect('ideas',`participant_id=neq.${participantId}&order=review_count.asc&limit=${PEER_COUNT}`);
+  if (result&&result.length>0) {
+    peerIdeas = result.map(r=>({id:r.id, text:r.text, participant_id:r.participant_id}));
+  } else { loadDemoPeerIdeas(); }
+  renderPeerIdeas();
+}
+
+function loadDemoPeerIdeas() {
+  const demo = [
+    "Record every lecture and make recordings available within 2 hours, with AI-generated chapter markers and searchable transcripts.",
+    "Replace the last 15 minutes of each lecture with a live Q&A where students submit questions anonymously via their phones.",
+    "Introduce mid-semester 'lecture audits' where a small student panel gives structured feedback to the professor, who then adjusts the remaining sessions.",
+    "Let students vote on the pace: at three points during a lecture, a quick poll asks 'too fast / just right / too slow' and the professor adapts in real time.",
+    "Pair each large lecture with a weekly 20-person workshop where students solve problems together, with the professor rotating between groups.",
+    "Provide a one-page 'lecture map' before each session showing the key concepts, how they connect, and what to read beforehand.",
+    "Have two professors co-teach a lecture, debating different perspectives on the topic to model critical thinking.",
+    "Create a 'lecture lab' room with round tables instead of rows, whiteboards on every wall, and no fixed podium — forcing interactive formats."
+  ];
+  const shuffled = demo.sort(()=>Math.random()-.5).slice(0, PEER_COUNT);
+  peerIdeas = shuffled.map(text=>({id:crypto.randomUUID(), text, participant_id:'demo'}));
+  renderPeerIdeas();
+}
+
+// Phase 3: Peer Ranking (no ratings, just rank)
+function renderPeerIdeas() {
+  peerRanking = peerIdeas.map(i=>i.id).sort(()=>Math.random()-.5);
+  renderRankList('peerRankList', peerRanking, peerIdeas);
+}
+
+// Submit peer evaluation
+async function submitPeerEval() {
+  if (supabase) {
+    const reviews = peerRanking.map((id,idx)=>({
+      id:crypto.randomUUID(), idea_id:id, reviewer_id:participantId,
+      peer_rank:idx+1, created_at:new Date().toISOString()
+    }));
+    await sbInsert('reviews', reviews);
+    for (const id of peerRanking) await sbRpc('increment_review_count',{idea_uuid:id});
+  }
+  document.getElementById('sessionInfo').textContent = `Session: ${sessionId.slice(0,8)}`;
+  showStep(3);
+}
+
+// Utils
+function escHtml(s) { const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+function showToast(msg) { const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
 </script>
 </body>
 </html>

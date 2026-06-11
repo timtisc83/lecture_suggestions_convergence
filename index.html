@@ -162,17 +162,6 @@
       </div>
     </div>
 
-    <details class="config-panel">
-      <summary>⚙️ Supabase Configuration (Admin)</summary>
-      <div class="config-fields">
-        <label>Supabase URL</label>
-        <input type="text" id="cfgUrl" placeholder="https://xxxxx.supabase.co" />
-        <label>Supabase Anon Key</label>
-        <input type="text" id="cfgKey" placeholder="eyJhbGciOi..." />
-        <button class="btn btn-primary btn-sm" onclick="saveConfig()">Save & Connect</button>
-        <p style="color:#92400e;margin-top:4px;">Without Supabase, the tool runs in <strong>local demo mode</strong>.</p>
-      </div>
-    </details>
 
     <div class="actions">
       <button class="btn btn-primary" onclick="goToRanking()" id="toRankBtn" disabled>Continue →</button>
@@ -326,6 +315,11 @@ function renderIdeas() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Host redirect
+  if (window.location.search.includes('host')) {
+    window.location.href = 'admin.html';
+    return;
+  }
   document.getElementById('newIdea').addEventListener('keydown', e => {
     if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); addIdea(); }
   });

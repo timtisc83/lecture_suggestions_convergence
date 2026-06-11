@@ -5,20 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Idea Friction — Host Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.8/dist/umd/supabase.min.js"></script>
 <style>
   :root {
-    --bg:#f0f2f5; --card:#fff; --primary:#2563eb; --primary-hover:#1d4ed8;
-    --accent:#10b981; --danger:#ef4444; --warn:#f59e0b;
-    --text:#1e293b; --muted:#64748b; --border:#e2e8f0; --radius:12px;
-    --sidebar:240px;
+    --bg:#f0f2f5;--card:#fff;--primary:#2563eb;--primary-hover:#1d4ed8;
+    --accent:#10b981;--danger:#ef4444;--text:#1e293b;--muted:#64748b;--border:#e2e8f0;--radius:12px;--sidebar:240px;
   }
   *{margin:0;padding:0;box-sizing:border-box;}
   body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;}
-
-  /* Sidebar */
   .sidebar{width:var(--sidebar);background:#1e293b;color:#fff;display:flex;flex-direction:column;flex-shrink:0;position:fixed;top:0;left:0;height:100vh;z-index:50;}
   .sidebar-logo{padding:24px 20px 16px;border-bottom:1px solid rgba(255,255,255,.1);}
-  .sidebar-logo h1{font-size:18px;font-weight:700;letter-spacing:-.3px;}
+  .sidebar-logo h1{font-size:18px;font-weight:700;}
   .sidebar-logo h1 span{color:#60a5fa;}
   .sidebar-logo p{font-size:11px;color:#94a3b8;margin-top:2px;}
   .sidebar-nav{flex:1;padding:16px 0;}
@@ -28,37 +25,24 @@
   .nav-item .icon{font-size:16px;width:20px;text-align:center;}
   .sidebar-footer{padding:16px 20px;border-top:1px solid rgba(255,255,255,.1);}
   .conn-status{display:flex;align-items:center;gap:8px;font-size:12px;color:#94a3b8;}
-  .conn-dot{width:8px;height:8px;border-radius:50%;background:#ef4444;flex-shrink:0;}
-  .conn-dot.connected{background:#10b981;}
-
-  /* Main */
+  .conn-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+  .conn-dot.ok{background:#10b981;}
+  .conn-dot.err{background:#ef4444;}
   .main{margin-left:var(--sidebar);flex:1;display:flex;flex-direction:column;}
   .topbar{background:#fff;border-bottom:1px solid var(--border);padding:0 32px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:40;}
   .topbar h2{font-size:16px;font-weight:600;}
-  .topbar-actions{display:flex;gap:8px;align-items:center;}
+  .topbar-actions{display:flex;gap:8px;}
   .content{padding:28px 32px;flex:1;}
-
-  /* Cards */
   .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:0 1px 3px rgba(0,0,0,.04);}
   .card-title{font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
-  .card-value{font-size:32px;font-weight:700;line-height:1.1;}
+  .card-value{font-size:32px;font-weight:700;}
   .card-sub{font-size:12px;color:var(--muted);margin-top:4px;}
-
-  /* Stat grid */
   .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
-
-  /* Buttons */
   .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border:none;border-radius:8px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;}
   .btn-primary{background:var(--primary);color:#fff;}
-  .btn-primary:hover{background:var(--primary-hover);}
   .btn-outline{background:transparent;color:var(--primary);border:1px solid var(--primary);}
-  .btn-outline:hover{background:rgba(37,99,235,.05);}
   .btn-danger{background:transparent;color:var(--danger);border:1px solid var(--danger);}
-  .btn-danger:hover{background:rgba(239,68,68,.05);}
   .btn-sm{padding:6px 12px;font-size:12px;}
-  .btn:disabled{opacity:.4;cursor:not-allowed;}
-
-  /* Table */
   .table-wrap{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--border);}
   table{width:100%;border-collapse:collapse;font-size:13px;}
   thead{background:#f8fafc;}
@@ -66,157 +50,73 @@
   td{padding:12px 16px;border-bottom:1px solid var(--border);vertical-align:top;}
   tr:last-child td{border-bottom:none;}
   tr:hover td{background:#f8fafc;}
-  .badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;}
+  .badge{display:inline-flex;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;}
   .badge-green{background:#dcfce7;color:#166534;}
-  .badge-blue{background:#dbeafe;color:#1e40af;}
   .badge-amber{background:#fef3c7;color:#92400e;}
   .badge-red{background:#fee2e2;color:#991b1b;}
-
-  /* Rank pill */
   .rank-pill{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:6px;font-size:11px;font-weight:700;}
   .rank-1{background:#fef3c7;color:#92400e;}
   .rank-2{background:#e2e8f0;color:#475569;}
   .rank-3{background:#fed7aa;color:#9a3412;}
   .rank-n{background:#f1f5f9;color:#64748b;}
-
-  /* Tabs */
-  .tabs{display:flex;gap:4px;margin-bottom:20px;background:#f1f5f9;padding:4px;border-radius:8px;width:fit-content;}
-  .tab{padding:6px 16px;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;color:var(--muted);border:none;background:transparent;transition:all .15s;}
-  .tab.active{background:#fff;color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.1);}
-
-  /* Config form */
-  .form-group{margin-bottom:16px;}
-  .form-group label{display:block;font-size:13px;font-weight:500;color:var(--muted);margin-bottom:6px;}
-  .form-group input{width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:14px;outline:none;transition:border .2s;}
-  .form-group input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.1);}
-  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
-
-  /* Alert */
-  .alert{padding:12px 16px;border-radius:8px;font-size:13px;margin-bottom:16px;line-height:1.5;}
-  .alert-warn{background:#fef3c7;border:1px solid #fde68a;color:#92400e;}
-  .alert-success{background:#dcfce7;border:1px solid #bbf7d0;color:#166534;}
-  .alert-info{background:#dbeafe;border:1px solid #bfdbfe;color:#1e40af;}
-
-  /* Modal */
-  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;display:flex;align-items:center;justify-content:center;}
-  .modal{background:#fff;border-radius:var(--radius);padding:28px;width:480px;max-width:90vw;box-shadow:0 20px 60px rgba(0,0,0,.2);}
-  .modal h3{font-size:18px;font-weight:700;margin-bottom:8px;}
-  .modal p{font-size:14px;color:var(--muted);margin-bottom:20px;line-height:1.5;}
-  .modal-actions{display:flex;gap:8px;justify-content:flex-end;}
-  .hidden{display:none!important;}
-
-  /* Idea text cell */
-  .idea-cell{max-width:320px;line-height:1.4;}
-
-  /* Progress bar mini */
   .mini-bar{height:6px;background:#e2e8f0;border-radius:99px;overflow:hidden;margin-top:6px;}
   .mini-bar-fill{height:100%;background:var(--accent);border-radius:99px;transition:width .4s;}
-
-  /* Empty state */
   .empty{text-align:center;padding:48px 24px;color:var(--muted);}
   .empty .empty-icon{font-size:40px;margin-bottom:12px;}
-  .empty p{font-size:14px;}
-
-  /* Toast */
+  .hidden{display:none!important;}
   .toast{position:fixed;bottom:24px;right:24px;background:#1e293b;color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;z-index:200;opacity:0;transition:opacity .3s;pointer-events:none;}
   .toast.show{opacity:1;}
-
-  /* Calibration chart */
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;display:flex;align-items:center;justify-content:center;}
+  .modal{background:#fff;border-radius:var(--radius);padding:28px;width:480px;max-width:90vw;}
+  .modal h3{font-size:18px;font-weight:700;margin-bottom:8px;}
+  .modal p{font-size:14px;color:var(--muted);margin-bottom:20px;}
+  .modal-actions{display:flex;gap:8px;justify-content:flex-end;}
   .calib-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;}
   .corr-value{font-size:48px;font-weight:700;color:var(--primary);}
   .corr-label{font-size:13px;color:var(--muted);margin-top:4px;}
-
-  @media(max-width:900px){
-    .stat-grid{grid-template-columns:repeat(2,1fr);}
-    .calib-grid{grid-template-columns:1fr;}
-  }
+  .alert{padding:12px 16px;border-radius:8px;font-size:13px;margin-bottom:16px;line-height:1.5;}
+  .alert-info{background:#dbeafe;border:1px solid #bfdbfe;color:#1e40af;}
+  .idea-cell{max-width:320px;line-height:1.4;}
+  @media(max-width:900px){.stat-grid{grid-template-columns:repeat(2,1fr);}.calib-grid{grid-template-columns:1fr;}}
 </style>
 </head>
 <body>
 
-<!-- Sidebar -->
 <aside class="sidebar">
-  <div class="sidebar-logo">
-    <h1><span>Idea</span> Friction</h1>
-    <p>Host Dashboard</p>
-  </div>
+  <div class="sidebar-logo"><h1><span>Idea</span> Friction</h1><p>Host Dashboard</p></div>
   <nav class="sidebar-nav">
-    <div class="nav-item active" onclick="showPage('overview')" id="nav-overview">
-      <span class="icon">📊</span> Overview
-    </div>
-    <div class="nav-item" onclick="showPage('ideas')" id="nav-ideas">
-      <span class="icon">💡</span> Ideas
-    </div>
-    <div class="nav-item" onclick="showPage('reviews')" id="nav-reviews">
-      <span class="icon">🔍</span> Peer Rankings
-    </div>
-    <div class="nav-item" onclick="showPage('calibration')" id="nav-calibration">
-      <span class="icon">🎯</span> Calibration
-    </div>
-    <div class="nav-item" onclick="showPage('settings')" id="nav-settings">
-      <span class="icon">⚙️</span> Settings
-    </div>
+    <div class="nav-item active" onclick="showPage('overview')" id="nav-overview"><span class="icon">📊</span> Overview</div>
+    <div class="nav-item" onclick="showPage('ideas')" id="nav-ideas"><span class="icon">💡</span> Ideas</div>
+    <div class="nav-item" onclick="showPage('reviews')" id="nav-reviews"><span class="icon">🔍</span> Peer Rankings</div>
+    <div class="nav-item" onclick="showPage('calibration')" id="nav-calibration"><span class="icon">🎯</span> Calibration</div>
   </nav>
   <div class="sidebar-footer">
-    <div class="conn-status">
-      <div class="conn-dot" id="connDot"></div>
-      <span id="connLabel">Not connected</span>
-    </div>
+    <div class="conn-status"><div class="conn-dot" id="connDot"></div><span id="connLabel">Connecting…</span></div>
   </div>
 </aside>
 
-<!-- Main -->
 <div class="main">
   <div class="topbar">
     <h2 id="pageTitle">Overview</h2>
     <div class="topbar-actions">
       <button class="btn btn-outline btn-sm" onclick="refreshAll()">↻ Refresh</button>
       <button class="btn btn-outline btn-sm" onclick="exportCSV()">⬇ Export CSV</button>
-      <button class="btn btn-danger btn-sm" onclick="openResetModal()">🗑 Reset Data</button>
+      <button class="btn btn-danger btn-sm" onclick="openResetModal()">🗑 Reset</button>
     </div>
   </div>
-
   <div class="content">
 
     <!-- OVERVIEW -->
     <div id="page-overview" class="page">
       <div class="stat-grid">
-        <div class="card">
-          <div class="card-title">Participants</div>
-          <div class="card-value" id="stat-participants">—</div>
-          <div class="card-sub">completed all steps</div>
-        </div>
-        <div class="card">
-          <div class="card-title">Ideas submitted</div>
-          <div class="card-value" id="stat-ideas">—</div>
-          <div class="card-sub">across all participants</div>
-        </div>
-        <div class="card">
-          <div class="card-title">Peer rankings</div>
-          <div class="card-value" id="stat-reviews">—</div>
-          <div class="card-sub">total review events</div>
-        </div>
-        <div class="card">
-          <div class="card-title">Coverage</div>
-          <div class="card-value" id="stat-coverage">—</div>
-          <div class="card-sub">ideas with ≥3 reviews</div>
-          <div class="mini-bar"><div class="mini-bar-fill" id="stat-coverage-bar" style="width:0%"></div></div>
-        </div>
+        <div class="card"><div class="card-title">Participants</div><div class="card-value" id="stat-participants">—</div></div>
+        <div class="card"><div class="card-title">Ideas</div><div class="card-value" id="stat-ideas">—</div></div>
+        <div class="card"><div class="card-title">Peer rankings</div><div class="card-value" id="stat-reviews">—</div></div>
+        <div class="card"><div class="card-title">Coverage ≥3</div><div class="card-value" id="stat-coverage">—</div><div class="mini-bar"><div class="mini-bar-fill" id="stat-coverage-bar" style="width:0%"></div></div></div>
       </div>
-
       <div class="card" style="margin-bottom:24px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-          <div>
-            <div class="card-title">Top-ranked ideas</div>
-            <p style="font-size:12px;color:var(--muted);margin-top:2px;">By average peer rank (lower = better)</p>
-          </div>
-        </div>
+        <div class="card-title" style="margin-bottom:12px;">Top-ranked ideas (by avg peer rank)</div>
         <div id="top-ideas-list"><div class="empty"><div class="empty-icon">💡</div><p>No data yet</p></div></div>
-      </div>
-
-      <div class="card">
-        <div class="card-title" style="margin-bottom:16px;">Review coverage per idea</div>
-        <div id="coverage-list"><div class="empty"><div class="empty-icon">🔍</div><p>No data yet</p></div></div>
       </div>
     </div>
 
@@ -224,17 +124,13 @@
     <div id="page-ideas" class="page hidden">
       <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-          <div class="card-title">All submitted ideas</div>
+          <div class="card-title">All ideas</div>
           <button class="btn btn-outline btn-sm" onclick="exportTableCSV('ideas-table','ideas')">⬇ CSV</button>
         </div>
-        <div class="table-wrap">
-          <table id="ideas-table">
-            <thead><tr>
-              <th>#</th><th>Idea</th><th>Self rank</th><th>Avg peer rank</th><th>Reviews</th><th>Participant</th>
-            </tr></thead>
-            <tbody id="ideas-tbody"><tr><td colspan="6"><div class="empty"><p>No data yet</p></div></td></tr></tbody>
-          </table>
-        </div>
+        <div class="table-wrap"><table id="ideas-table">
+          <thead><tr><th>#</th><th>Idea</th><th>Self rank</th><th>Avg peer rank</th><th>Reviews</th><th>Participant</th></tr></thead>
+          <tbody id="ideas-tbody"><tr><td colspan="6"><div class="empty"><p>No data yet</p></div></td></tr></tbody>
+        </table></div>
       </div>
     </div>
 
@@ -245,14 +141,10 @@
           <div class="card-title">All peer rankings</div>
           <button class="btn btn-outline btn-sm" onclick="exportTableCSV('reviews-table','reviews')">⬇ CSV</button>
         </div>
-        <div class="table-wrap">
-          <table id="reviews-table">
-            <thead><tr>
-              <th>Idea (truncated)</th><th>Peer rank given</th><th>Reviewer</th><th>Time</th>
-            </tr></thead>
-            <tbody id="reviews-tbody"><tr><td colspan="4"><div class="empty"><p>No data yet</p></div></td></tr></tbody>
-          </table>
-        </div>
+        <div class="table-wrap"><table id="reviews-table">
+          <thead><tr><th>Idea</th><th>Peer rank</th><th>Reviewer</th><th>Time</th></tr></thead>
+          <tbody id="reviews-tbody"><tr><td colspan="4"><div class="empty"><p>No data yet</p></div></td></tr></tbody>
+        </table></div>
       </div>
     </div>
 
@@ -260,60 +152,21 @@
     <div id="page-calibration" class="page hidden">
       <div class="alert alert-info">
         <strong>Calibration</strong> measures whether participants can accurately judge the quality of their own ideas.
-        A strong negative correlation between self-rank and avg peer-rank means people correctly identify their best ideas
-        (self-rank 1 = best → should get lowest avg peer rank).
+        A strong positive correlation means self-rank #1 ideas also get the best (lowest) avg peer rank.
       </div>
       <div class="calib-grid">
-        <div class="card">
-          <div class="card-title">Overall calibration</div>
-          <div class="corr-value" id="calib-corr">—</div>
-          <div class="corr-label">Spearman ρ: self-rank vs avg peer-rank<br/>(negative = good calibration)</div>
-        </div>
-        <div class="card">
-          <div class="card-title">Interpretation</div>
-          <div id="calib-interp" style="font-size:14px;line-height:1.6;color:var(--muted);margin-top:8px;">Connect to Supabase and refresh to see results.</div>
-        </div>
+        <div class="card"><div class="card-title">Overall calibration</div><div class="corr-value" id="calib-corr">—</div><div class="corr-label">Spearman ρ (self-rank vs avg peer-rank)</div></div>
+        <div class="card"><div class="card-title">Interpretation</div><div id="calib-interp" style="font-size:14px;line-height:1.6;color:var(--muted);margin-top:8px;">Load data to see results.</div></div>
       </div>
       <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-          <div class="card-title">Per-participant calibration</div>
+          <div class="card-title">Per-participant</div>
           <button class="btn btn-outline btn-sm" onclick="exportTableCSV('calib-table','calibration')">⬇ CSV</button>
         </div>
-        <div class="table-wrap">
-          <table id="calib-table">
-            <thead><tr>
-              <th>Participant</th><th>Ideas submitted</th><th>Self-rank #1 idea</th><th>Avg peer rank of #1</th><th>Calibration signal</th>
-            </tr></thead>
-            <tbody id="calib-tbody"><tr><td colspan="5"><div class="empty"><p>No data yet</p></div></td></tr></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- SETTINGS -->
-    <div id="page-settings" class="page hidden">
-      <div class="card" style="max-width:560px;">
-        <h3 style="font-size:16px;font-weight:600;margin-bottom:4px;">Supabase Connection</h3>
-        <p style="font-size:13px;color:var(--muted);margin-bottom:20px;">Connect to your Supabase project to load and manage data.</p>
-        <div class="form-group">
-          <label>Supabase Project URL</label>
-          <input type="text" id="cfg-url" placeholder="https://xxxxx.supabase.co"/>
-        </div>
-        <div class="form-group">
-          <label>Anon Public Key</label>
-          <input type="text" id="cfg-key" placeholder="eyJhbGciOi..."/>
-        </div>
-        <div style="display:flex;gap:8px;">
-          <button class="btn btn-primary" onclick="saveAndConnect()">Connect</button>
-          <button class="btn btn-outline" onclick="testConnection()">Test connection</button>
-        </div>
-        <div id="conn-result" style="margin-top:12px;"></div>
-      </div>
-
-      <div class="card" style="max-width:560px;margin-top:16px;">
-        <h3 style="font-size:16px;font-weight:600;margin-bottom:4px;">Danger Zone</h3>
-        <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">Permanently delete all collected data. This cannot be undone.</p>
-        <button class="btn btn-danger" onclick="openResetModal()">🗑 Reset all data</button>
+        <div class="table-wrap"><table id="calib-table">
+          <thead><tr><th>Participant</th><th>Ideas</th><th>Self #1 idea</th><th>Avg peer rank of #1</th><th>Signal</th></tr></thead>
+          <tbody id="calib-tbody"><tr><td colspan="5"><div class="empty"><p>No data yet</p></div></td></tr></tbody>
+        </table></div>
       </div>
     </div>
 
@@ -324,341 +177,197 @@
 <div class="modal-overlay hidden" id="resetModal">
   <div class="modal">
     <h3>Reset all data?</h3>
-    <p>This will permanently delete all participants, ideas, and peer rankings from the database. This action cannot be undone.</p>
+    <p>This permanently deletes all participants, ideas, and peer rankings. Cannot be undone.</p>
     <div class="modal-actions">
       <button class="btn btn-outline" onclick="closeResetModal()">Cancel</button>
-      <button class="btn btn-danger" onclick="confirmReset()">Yes, delete everything</button>
+      <button class="btn btn-danger" onclick="confirmReset()">Delete everything</button>
     </div>
   </div>
 </div>
-
 <div class="toast" id="toast"></div>
 
 <script>
-// ── State ──────────────────────────────────────────────────
-let sb = null;
-let allIdeas = [];
-let allReviews = [];
-let allParticipants = [];
-
 // ── Supabase ───────────────────────────────────────────────
-function saveAndConnect() {
-  const url = document.getElementById('cfg-url').value.trim();
-  const key = document.getElementById('cfg-key').value.trim();
-  if (!url || !key) { showToast('Fill in both fields'); return; }
-  localStorage.setItem('sb_url', url);
-  localStorage.setItem('sb_key', key);
-  connect(url, key);
-}
+const SB_URL = 'https://uyynxszpmtwfxmnwirjn.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5eW54c3pwbXR3ZnhtbndpcmpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NjE3NDcsImV4cCI6MjA5MTIzNzc0N30.WJexHxaof97Z_hNI9Dv6L4Cq7hlM366dGhu89McUNgE';
+const sb = supabase.createClient(SB_URL, SB_KEY);
 
-function connect(url, key) {
-  sb = { url: url.replace(/\/$/, ''), key };
-  document.getElementById('connDot').classList.add('connected');
-  document.getElementById('connLabel').textContent = 'Connected';
-  refreshAll();
-}
+let allParticipants=[], allIdeas=[], allReviews=[];
 
-async function testConnection() {
-  if (!sb) { showToast('Enter credentials first'); return; }
-  const res = await sbSelect('participants', 'limit=1');
-  const el = document.getElementById('conn-result');
-  if (res !== null) {
-    el.innerHTML = '<div class="alert alert-success">✅ Connection successful!</div>';
-  } else {
-    el.innerHTML = '<div class="alert alert-warn">❌ Could not connect. Check your URL and key.</div>';
-  }
-}
-
-async function sbSelect(table, query = '') {
-  if (!sb) return null;
-  try {
-    const res = await fetch(`${sb.url}/rest/v1/${table}?${query}`, {
-      headers: { 'apikey': sb.key, 'Authorization': `Bearer ${sb.key}`, 'Accept': 'application/json' }
-    });
-    const text = await res.text();
-    console.log(`[sbSelect] ${table} → ${res.status}:`, text.slice(0, 300));
-    if (!res.ok) { showToast(`Error on ${table}: ${res.status}`); return null; }
-    return JSON.parse(text);
-  } catch(e) { console.error(e); showToast('Fetch error: ' + e.message); return null; }
-}
-
-async function sbDelete(table) {
-  if (!sb) return null;
-  try {
-    const res = await fetch(`${sb.url}/rest/v1/${table}?id=gte.00000000-0000-0000-0000-000000000000`, {
-      method: 'DELETE',
-      headers: { 'apikey': sb.key, 'Authorization': `Bearer ${sb.key}` }
-    });
-    console.log(`[sbDelete] ${table} → ${res.status}`);
-  } catch(e) { console.error(e); }
-}
-
-// ── Data loading ───────────────────────────────────────────
+// ── Data ───────────────────────────────────────────────────
 async function refreshAll() {
-  if (!sb) { showToast('Not connected'); return; }
-  showToast('Loading data…');
+  showToast('Loading…');
   const [p, i, r] = await Promise.all([
-    sbSelect('participants', 'order=created_at.desc'),
-    sbSelect('ideas', 'order=created_at.desc'),
-    sbSelect('reviews', 'order=created_at.desc')
+    sb.from('participants').select('*').order('created_at',{ascending:false}),
+    sb.from('ideas').select('*').order('created_at',{ascending:false}),
+    sb.from('reviews').select('*').order('created_at',{ascending:false})
   ]);
-  console.log('participants:', p);
-  console.log('ideas:', i);
-  console.log('reviews:', r);
-  allParticipants = Array.isArray(p) ? p : [];
-  allIdeas = Array.isArray(i) ? i : [];
-  allReviews = Array.isArray(r) ? r : [];
+
+  if (p.error) console.error('participants:', p.error);
+  if (i.error) console.error('ideas:', i.error);
+  if (r.error) console.error('reviews:', r.error);
+
+  allParticipants = p.data || [];
+  allIdeas = i.data || [];
+  allReviews = r.data || [];
+
+  document.getElementById('connDot').className = 'conn-dot ok';
+  document.getElementById('connLabel').textContent = 'Connected';
+
   renderAll();
-  showToast(`Loaded: ${allParticipants.length} participants, ${allIdeas.length} ideas, ${allReviews.length} reviews`);
+  showToast(`${allParticipants.length} participants, ${allIdeas.length} ideas, ${allReviews.length} reviews`);
 }
 
-function renderAll() {
-  renderOverview();
-  renderIdeasTable();
-  renderReviewsTable();
-  renderCalibration();
-}
+function renderAll() { renderOverview(); renderIdeasTable(); renderReviewsTable(); renderCalibration(); }
 
 // ── Overview ───────────────────────────────────────────────
 function renderOverview() {
   document.getElementById('stat-participants').textContent = allParticipants.length;
   document.getElementById('stat-ideas').textContent = allIdeas.length;
   document.getElementById('stat-reviews').textContent = allReviews.length;
+  const covered = allIdeas.filter(i=>(i.review_count||0)>=3).length;
+  const pct = allIdeas.length ? Math.round(covered/allIdeas.length*100) : 0;
+  document.getElementById('stat-coverage').textContent = pct+'%';
+  document.getElementById('stat-coverage-bar').style.width = pct+'%';
 
-  const covered = allIdeas.filter(i => (i.review_count || 0) >= 3).length;
-  const pct = allIdeas.length ? Math.round(covered / allIdeas.length * 100) : 0;
-  document.getElementById('stat-coverage').textContent = `${pct}%`;
-  document.getElementById('stat-coverage-bar').style.width = pct + '%';
-
-  // Top ideas by avg peer rank
-  const ideaStats = computeIdeaStats();
-  const sorted = ideaStats.filter(i => i.nReviews > 0).sort((a,b) => a.avgPeerRank - b.avgPeerRank).slice(0, 5);
-
-  const topEl = document.getElementById('top-ideas-list');
-  if (!sorted.length) {
-    topEl.innerHTML = '<div class="empty"><div class="empty-icon">💡</div><p>No peer rankings yet</p></div>';
-  } else {
-    topEl.innerHTML = sorted.map((idea, idx) => `
-      <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);">
-        <div class="rank-pill rank-${idx < 3 ? idx+1 : 'n'}">#${idx+1}</div>
-        <div style="flex:1;font-size:14px;line-height:1.4;">${escHtml(idea.text)}</div>
-        <div style="text-align:right;flex-shrink:0;">
-          <div style="font-size:13px;font-weight:600;">avg rank ${idea.avgPeerRank.toFixed(1)}</div>
-          <div style="font-size:11px;color:var(--muted);">${idea.nReviews} review${idea.nReviews!==1?'s':''}</div>
-        </div>
-      </div>`).join('');
-  }
-
-  // Coverage list
-  const covEl = document.getElementById('coverage-list');
-  if (!allIdeas.length) {
-    covEl.innerHTML = '<div class="empty"><div class="empty-icon">🔍</div><p>No ideas yet</p></div>';
-  } else {
-    const sorted2 = [...allIdeas].sort((a,b) => (b.review_count||0) - (a.review_count||0));
-    covEl.innerHTML = sorted2.map(idea => {
-      const cnt = idea.review_count || 0;
-      const pct = Math.min(cnt / 3 * 100, 100);
-      const badge = cnt >= 3 ? 'badge-green' : cnt >= 1 ? 'badge-amber' : 'badge-red';
-      return `<div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--border);">
-        <div style="flex:1;font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:400px;">${escHtml(idea.text)}</div>
-        <span class="badge ${badge}">${cnt} review${cnt!==1?'s':''}</span>
-        <div style="width:80px;"><div class="mini-bar"><div class="mini-bar-fill" style="width:${pct}%"></div></div></div>
-      </div>`;
-    }).join('');
-  }
+  const stats = computeIdeaStats().filter(i=>i.nReviews>0).sort((a,b)=>a.avgPeerRank-b.avgPeerRank).slice(0,5);
+  const el = document.getElementById('top-ideas-list');
+  if (!stats.length) { el.innerHTML='<div class="empty"><div class="empty-icon">💡</div><p>No peer rankings yet</p></div>'; return; }
+  el.innerHTML = stats.map((idea,idx)=>`
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);">
+      <div class="rank-pill rank-${idx<3?idx+1:'n'}">#${idx+1}</div>
+      <div style="flex:1;font-size:14px;">${escHtml(idea.text)}</div>
+      <div style="text-align:right;flex-shrink:0;"><div style="font-size:13px;font-weight:600;">avg ${idea.avgPeerRank.toFixed(1)}</div><div style="font-size:11px;color:var(--muted);">${idea.nReviews} reviews</div></div>
+    </div>`).join('');
 }
 
 // ── Ideas table ────────────────────────────────────────────
 function renderIdeasTable() {
   const stats = computeIdeaStats();
   const tbody = document.getElementById('ideas-tbody');
-  if (!stats.length) {
-    tbody.innerHTML = '<tr><td colspan="6"><div class="empty"><p>No ideas yet</p></div></td></tr>';
-    return;
-  }
-  tbody.innerHTML = stats.map((idea, idx) => `
-    <tr>
-      <td style="color:var(--muted);font-size:12px;">${idx+1}</td>
-      <td class="idea-cell">${escHtml(idea.text)}</td>
-      <td><div class="rank-pill rank-${idea.selfRank <= 3 ? idea.selfRank : 'n'}">#${idea.selfRank}</div></td>
-      <td>${idea.nReviews > 0 ? `<strong>${idea.avgPeerRank.toFixed(1)}</strong>` : '<span style="color:var(--muted)">—</span>'}</td>
-      <td><span class="badge ${idea.nReviews>=3?'badge-green':idea.nReviews>0?'badge-amber':'badge-red'}">${idea.nReviews}</span></td>
-      <td style="font-size:11px;color:var(--muted);font-family:monospace;">${idea.participantId.slice(0,8)}</td>
-    </tr>`).join('');
+  if (!stats.length) { tbody.innerHTML='<tr><td colspan="6"><div class="empty"><p>No ideas yet</p></div></td></tr>'; return; }
+  tbody.innerHTML = stats.map((idea,idx)=>`<tr>
+    <td style="color:var(--muted)">${idx+1}</td>
+    <td class="idea-cell">${escHtml(idea.text)}</td>
+    <td><div class="rank-pill rank-${idea.selfRank<=3?idea.selfRank:'n'}">#${idea.selfRank}</div></td>
+    <td>${idea.nReviews>0?'<strong>'+idea.avgPeerRank.toFixed(1)+'</strong>':'—'}</td>
+    <td><span class="badge ${idea.nReviews>=3?'badge-green':idea.nReviews>0?'badge-amber':'badge-red'}">${idea.nReviews}</span></td>
+    <td style="font-size:11px;font-family:monospace;color:var(--muted)">${idea.participantId.slice(0,8)}</td>
+  </tr>`).join('');
 }
 
 // ── Reviews table ──────────────────────────────────────────
 function renderReviewsTable() {
   const tbody = document.getElementById('reviews-tbody');
-  if (!allReviews.length) {
-    tbody.innerHTML = '<tr><td colspan="4"><div class="empty"><p>No peer rankings yet</p></div></td></tr>';
-    return;
-  }
-  tbody.innerHTML = allReviews.map(r => {
-    const idea = allIdeas.find(i => i.id === r.idea_id);
-    const text = idea ? idea.text.slice(0, 60) + (idea.text.length > 60 ? '…' : '') : r.idea_id.slice(0,8);
+  if (!allReviews.length) { tbody.innerHTML='<tr><td colspan="4"><div class="empty"><p>No reviews yet</p></div></td></tr>'; return; }
+  tbody.innerHTML = allReviews.map(r=>{
+    const idea = allIdeas.find(i=>i.id===r.idea_id);
+    const text = idea ? idea.text.slice(0,60)+(idea.text.length>60?'…':'') : r.idea_id.slice(0,8);
     const d = new Date(r.created_at);
     return `<tr>
       <td class="idea-cell">${escHtml(text)}</td>
-      <td><div class="rank-pill rank-${r.peer_rank <= 3 ? r.peer_rank : 'n'}">#${r.peer_rank}</div></td>
-      <td style="font-size:11px;color:var(--muted);font-family:monospace;">${r.reviewer_id.slice(0,8)}</td>
-      <td style="font-size:12px;color:var(--muted);">${d.toLocaleDateString()} ${d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</td>
+      <td><div class="rank-pill rank-${r.peer_rank<=3?r.peer_rank:'n'}">#${r.peer_rank}</div></td>
+      <td style="font-size:11px;font-family:monospace;color:var(--muted)">${r.reviewer_id.slice(0,8)}</td>
+      <td style="font-size:12px;color:var(--muted)">${d.toLocaleDateString()} ${d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</td>
     </tr>`;
   }).join('');
 }
 
 // ── Calibration ────────────────────────────────────────────
 function renderCalibration() {
-  const stats = computeIdeaStats().filter(i => i.nReviews > 0);
+  const stats = computeIdeaStats().filter(i=>i.nReviews>0);
   const tbody = document.getElementById('calib-tbody');
+  if (!stats.length) { tbody.innerHTML='<tr><td colspan="5"><div class="empty"><p>No data yet</p></div></td></tr>'; document.getElementById('calib-corr').textContent='—'; return; }
 
-  if (!stats.length) {
-    tbody.innerHTML = '<tr><td colspan="5"><div class="empty"><p>No data yet</p></div></td></tr>';
-    document.getElementById('calib-corr').textContent = '—';
-    return;
-  }
+  const rho = spearman(stats.map(i=>i.selfRank), stats.map(i=>i.avgPeerRank));
+  document.getElementById('calib-corr').textContent = isNaN(rho)?'—':rho.toFixed(2);
 
-  // Overall Spearman correlation (self_rank vs avg_peer_rank)
-  const rho = spearman(stats.map(i => i.selfRank), stats.map(i => i.avgPeerRank));
-  document.getElementById('calib-corr').textContent = isNaN(rho) ? '—' : rho.toFixed(2);
+  const el = document.getElementById('calib-interp');
+  if (isNaN(rho)) el.textContent='Not enough data.';
+  else if (rho>0.4) el.innerHTML='<span style="color:#166534;font-weight:600">Strong calibration ✅</span><br/>Self-rankings align well with peer judgments.';
+  else if (rho>0) el.innerHTML='<span style="color:#92400e;font-weight:600">Moderate calibration ⚠️</span><br/>Some alignment between self- and peer-rankings.';
+  else el.innerHTML='<span style="color:#991b1b;font-weight:600">Poor calibration ❌</span><br/>Self-rankings do not predict peer rankings.';
 
-  const interpEl = document.getElementById('calib-interp');
-  if (isNaN(rho)) {
-    interpEl.textContent = 'Not enough data to compute correlation.';
-  } else if (rho < -0.4) {
-    interpEl.innerHTML = '<span style="color:#166534;font-weight:600;">Strong calibration ✅</span><br/>Participants are good at identifying their best ideas — self-rankings align well with peer judgments.';
-  } else if (rho < 0) {
-    interpEl.innerHTML = '<span style="color:#92400e;font-weight:600;">Moderate calibration ⚠️</span><br/>Some alignment between self- and peer-rankings, but participants are not reliably identifying their best ideas.';
-  } else {
-    interpEl.innerHTML = '<span style="color:#991b1b;font-weight:600;">Poor calibration ❌</span><br/>Self-rankings do not predict peer rankings — participants struggle to assess the quality of their own ideas.';
-  }
-
-  // Per-participant table
-  const byParticipant = {};
-  stats.forEach(idea => {
-    if (!byParticipant[idea.participantId]) byParticipant[idea.participantId] = [];
-    byParticipant[idea.participantId].push(idea);
-  });
-
-  tbody.innerHTML = Object.entries(byParticipant).map(([pid, pidIdeas]) => {
-    const top = pidIdeas.find(i => i.selfRank === 1);
-    const nIdeas = pidIdeas.length;
-    const topAvgPeer = top ? top.avgPeerRank.toFixed(1) : '—';
-    const signal = top && top.nReviews > 0
-      ? (top.avgPeerRank <= 2 ? '<span class="badge badge-green">Good</span>' : top.avgPeerRank <= 3.5 ? '<span class="badge badge-amber">Mixed</span>' : '<span class="badge badge-red">Poor</span>')
-      : '<span class="badge">—</span>';
+  const byP={};
+  stats.forEach(i=>{ if(!byP[i.participantId]) byP[i.participantId]=[]; byP[i.participantId].push(i); });
+  tbody.innerHTML = Object.entries(byP).map(([pid,pidIdeas])=>{
+    const top = pidIdeas.find(i=>i.selfRank===1);
+    const sig = top&&top.nReviews>0 ? (top.avgPeerRank<=2?'<span class="badge badge-green">Good</span>':top.avgPeerRank<=3.5?'<span class="badge badge-amber">Mixed</span>':'<span class="badge badge-red">Poor</span>') : '—';
     return `<tr>
-      <td style="font-size:11px;font-family:monospace;color:var(--muted);">${pid.slice(0,8)}</td>
-      <td>${nIdeas}</td>
-      <td style="font-size:13px;max-width:200px;">${top ? escHtml(top.text.slice(0,60))+'…' : '—'}</td>
-      <td>${topAvgPeer}</td>
-      <td>${signal}</td>
+      <td style="font-size:11px;font-family:monospace;color:var(--muted)">${pid.slice(0,8)}</td>
+      <td>${pidIdeas.length}</td>
+      <td style="font-size:13px;max-width:200px">${top?escHtml(top.text.slice(0,60))+'…':'—'}</td>
+      <td>${top&&top.nReviews>0?top.avgPeerRank.toFixed(1):'—'}</td>
+      <td>${sig}</td>
     </tr>`;
   }).join('');
 }
 
 // ── Helpers ────────────────────────────────────────────────
 function computeIdeaStats() {
-  return allIdeas.map(idea => {
-    const reviews = allReviews.filter(r => r.idea_id === idea.id);
-    const avgPeerRank = reviews.length ? reviews.reduce((s,r) => s + r.peer_rank, 0) / reviews.length : null;
-    return {
-      id: idea.id,
-      text: idea.text,
-      selfRank: idea.self_rank,
-      participantId: idea.participant_id,
-      nReviews: reviews.length,
-      avgPeerRank: avgPeerRank || 99
-    };
+  return allIdeas.map(idea=>{
+    const reviews = allReviews.filter(r=>r.idea_id===idea.id);
+    const avg = reviews.length ? reviews.reduce((s,r)=>s+r.peer_rank,0)/reviews.length : 99;
+    return {id:idea.id, text:idea.text, selfRank:idea.self_rank, participantId:idea.participant_id, nReviews:reviews.length, avgPeerRank:avg};
   });
 }
 
-function spearman(xs, ys) {
-  const n = xs.length;
-  if (n < 2) return NaN;
-  const rank = arr => {
-    const sorted = [...arr].map((v,i)=>({v,i})).sort((a,b)=>a.v-b.v);
-    const ranks = new Array(n);
-    sorted.forEach((s,r) => ranks[s.i] = r+1);
-    return ranks;
-  };
-  const rx = rank(xs), ry = rank(ys);
-  const d2 = rx.reduce((s,_,i) => s + (rx[i]-ry[i])**2, 0);
-  return 1 - (6*d2)/(n*(n*n-1));
+function spearman(xs,ys) {
+  const n=xs.length; if(n<2) return NaN;
+  const rank=arr=>{const s=[...arr].map((v,i)=>({v,i})).sort((a,b)=>a.v-b.v);const r=new Array(n);s.forEach((s,ri)=>r[s.i]=ri+1);return r;};
+  const rx=rank(xs),ry=rank(ys);
+  const d2=rx.reduce((s,_,i)=>s+(rx[i]-ry[i])**2,0);
+  return 1-(6*d2)/(n*(n*n-1));
 }
 
-function escHtml(s) { const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+function escHtml(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 
-// ── Navigation ─────────────────────────────────────────────
+// ── Nav ────────────────────────────────────────────────────
 function showPage(name) {
-  document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p=>p.classList.add('hidden'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('page-'+name).classList.remove('hidden');
   document.getElementById('nav-'+name).classList.add('active');
-  const titles = {overview:'Overview', ideas:'Ideas', reviews:'Peer Rankings', calibration:'Calibration', settings:'Settings'};
-  document.getElementById('pageTitle').textContent = titles[name];
+  const t={overview:'Overview',ideas:'Ideas',reviews:'Peer Rankings',calibration:'Calibration'};
+  document.getElementById('pageTitle').textContent=t[name];
 }
 
 // ── Export ─────────────────────────────────────────────────
 function exportCSV() {
-  const stats = computeIdeaStats();
-  const rows = [['idea_id','participant_id','text','self_rank','n_reviews','avg_peer_rank']];
-  stats.forEach(i => rows.push([i.id, i.participantId, `"${i.text.replace(/"/g,'""')}"`, i.selfRank, i.nReviews, i.avgPeerRank === 99 ? '' : i.avgPeerRank.toFixed(2)]));
-  downloadCSV(rows, 'idea_friction_export.csv');
+  const stats=computeIdeaStats();
+  const rows=[['idea_id','participant_id','text','self_rank','n_reviews','avg_peer_rank']];
+  stats.forEach(i=>rows.push([i.id,i.participantId,'"'+i.text.replace(/"/g,'""')+'"',i.selfRank,i.nReviews,i.avgPeerRank===99?'':i.avgPeerRank.toFixed(2)]));
+  downloadCSV(rows,'idea_friction_export.csv');
 }
-
-function exportTableCSV(tableId, filename) {
-  const table = document.getElementById(tableId);
-  const rows = [];
-  table.querySelectorAll('tr').forEach(tr => {
-    rows.push([...tr.querySelectorAll('th,td')].map(c => `"${c.innerText.replace(/"/g,'""')}"`));
-  });
-  downloadCSV(rows, filename+'.csv');
+function exportTableCSV(tableId,filename) {
+  const table=document.getElementById(tableId);const rows=[];
+  table.querySelectorAll('tr').forEach(tr=>{rows.push([...tr.querySelectorAll('th,td')].map(c=>'"'+c.innerText.replace(/"/g,'""')+'"'));});
+  downloadCSV(rows,filename+'.csv');
 }
-
-function downloadCSV(rows, filename) {
-  const csv = rows.map(r => r.join(',')).join('\n');
-  const a = document.createElement('a');
-  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
-  a.download = filename;
-  a.click();
+function downloadCSV(rows,filename) {
+  const csv=rows.map(r=>r.join(',')).join('\n');
+  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download=filename;a.click();
 }
 
 // ── Reset ──────────────────────────────────────────────────
-function openResetModal() { document.getElementById('resetModal').classList.remove('hidden'); }
-function closeResetModal() { document.getElementById('resetModal').classList.add('hidden'); }
+function openResetModal(){document.getElementById('resetModal').classList.remove('hidden');}
+function closeResetModal(){document.getElementById('resetModal').classList.add('hidden');}
 async function confirmReset() {
   closeResetModal();
-  if (!sb) { showToast('Not connected to Supabase'); return; }
-  showToast('Deleting data…');
-  // Delete in FK order
-  await sbDelete('reviews');
-  await sbDelete('ideas');
-  await sbDelete('participants');
+  showToast('Deleting…');
+  await sb.from('reviews').delete().gte('id','00000000-0000-0000-0000-000000000000');
+  await sb.from('ideas').delete().gte('id','00000000-0000-0000-0000-000000000000');
+  await sb.from('participants').delete().gte('id','00000000-0000-0000-0000-000000000000');
   allIdeas=[]; allReviews=[]; allParticipants=[];
   renderAll();
   showToast('All data deleted');
 }
 
 // ── Toast ──────────────────────────────────────────────────
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2500);
-}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
 
 // ── Init ───────────────────────────────────────────────────
-const DEFAULT_SB_URL = 'https://uyynxszpmtwfxmnwirjn.supabase.co';
-const DEFAULT_SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5eW54c3pwbXR3ZnhtbndpcmpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NjE3NDcsImV4cCI6MjA5MTIzNzc0N30.WJexHxaof97Z_hNI9Dv6L4Cq7hlM366dGhu89McUNgE';
-
-document.addEventListener('DOMContentLoaded', () => {
-  const url = localStorage.getItem('sb_url') || DEFAULT_SB_URL;
-  const key = localStorage.getItem('sb_key') || DEFAULT_SB_KEY;
-  document.getElementById('cfg-url').value = url;
-  document.getElementById('cfg-key').value = key;
-  connect(url, key);
-});
+document.addEventListener('DOMContentLoaded', () => { refreshAll(); });
 </script>
 </body>
 </html>

@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Idea Friction</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.8/dist/umd/supabase.min.js"></script>
 <style>
   :root {
     --bg: #f8f9fb; --card: #ffffff; --primary: #2563eb; --primary-hover: #1d4ed8;
@@ -26,12 +27,11 @@
   .step-dot { width:10px; height:10px; border-radius:50%; background:var(--border); transition:all .3s; }
   .step-dot.active { background:var(--primary); transform:scale(1.3); }
   .step-dot.done { background:var(--accent); }
-  input[type="text"], textarea {
+  textarea {
     width:100%; padding:12px 16px; border:1px solid var(--border); border-radius:8px;
     font-family:inherit; font-size:14px; transition:border .2s; outline:none; resize:vertical;
   }
-  input:focus, textarea:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(37,99,235,.1); }
-  label { display:block; font-size:13px; font-weight:500; color:var(--muted); margin-bottom:6px; }
+  textarea:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(37,99,235,.1); }
   .btn {
     display:inline-flex; align-items:center; gap:8px; padding:12px 24px; border:none;
     border-radius:8px; font-family:inherit; font-size:14px; font-weight:600;
@@ -41,16 +41,12 @@
   .btn-primary:hover { background:var(--primary-hover); transform:translateY(-1px); }
   .btn-primary:disabled { opacity:.5; cursor:not-allowed; transform:none; }
   .btn-outline { background:transparent; color:var(--primary); border:1px solid var(--primary); }
-  .btn-outline:hover { background:rgba(37,99,235,.05); }
   .btn-sm { padding:8px 14px; font-size:13px; }
-  .btn-block { width:100%; justify-content:center; }
   .actions { display:flex; gap:12px; justify-content:flex-end; margin-top:24px; }
   .idea-item {
     display:flex; align-items:flex-start; gap:12px; padding:16px;
-    border:1px solid var(--border); border-radius:8px; margin-bottom:8px;
-    background:#fafbfc; transition:all .2s;
+    border:1px solid var(--border); border-radius:8px; margin-bottom:8px; background:#fafbfc;
   }
-  .idea-item:hover { border-color:#cbd5e1; }
   .idea-number {
     min-width:28px; height:28px; border-radius:50%; background:var(--primary);
     color:#fff; display:flex; align-items:center; justify-content:center;
@@ -66,7 +62,7 @@
   .rank-item {
     display:flex; align-items:center; gap:12px; padding:16px;
     border:2px solid var(--border); border-radius:8px; margin-bottom:8px;
-    background:#fff; cursor:grab; transition:all .2s; user-select:none;
+    background:#fff; cursor:grab; user-select:none;
   }
   .rank-item:active { cursor:grabbing; }
   .rank-item.dragging { opacity:.5; border-color:var(--primary); }
@@ -82,23 +78,6 @@
   .rank-badge.r5 { background:#f1f5f9; color:#64748b; }
   .rank-text { flex:1; font-size:14px; line-height:1.5; }
   .drag-handle { color:var(--muted); font-size:18px; flex-shrink:0; }
-  .peer-idea-card {
-    border:2px solid var(--border); border-radius:var(--radius); padding:24px;
-    margin-bottom:16px; background:#fff;
-  }
-  .peer-idea-card .idea-label { font-size:12px; font-weight:600; color:var(--primary); text-transform:uppercase; letter-spacing:.5px; margin-bottom:8px; }
-  .peer-idea-card .idea-content { font-size:15px; line-height:1.6; margin-bottom:16px; }
-  .rating-row { display:flex; gap:16px; flex-wrap:wrap; }
-  .rating-group { flex:1; min-width:140px; }
-  .rating-group label { margin-bottom:8px; }
-  .star-row { display:flex; gap:4px; }
-  .star-btn {
-    width:36px; height:36px; border:1px solid var(--border); border-radius:6px;
-    background:#fff; cursor:pointer; font-size:14px; font-weight:600;
-    color:var(--muted); transition:all .15s; display:flex; align-items:center; justify-content:center;
-  }
-  .star-btn:hover { border-color:var(--primary); color:var(--primary); }
-  .star-btn.selected { background:var(--primary); color:#fff; border-color:var(--primary); }
   .counter { text-align:right; font-size:13px; color:var(--muted); margin-top:8px; }
   .thank-you { text-align:center; padding:48px 24px; }
   .thank-you .icon { font-size:64px; margin-bottom:16px; }
@@ -111,13 +90,6 @@
     font-size:14px; z-index:200; opacity:0; transition:opacity .3s; pointer-events:none;
   }
   .toast.show { opacity:1; }
-  .config-panel {
-    background:#fefce8; border:1px solid #fde68a; border-radius:8px;
-    padding:16px; margin-bottom:24px; font-size:13px;
-  }
-  .config-panel summary { cursor:pointer; font-weight:600; color:#92400e; }
-  .config-panel .config-fields { margin-top:12px; display:flex; flex-direction:column; gap:8px; }
-  .config-panel input { font-size:13px; padding:8px 12px; }
   .session-info {
     text-align:center; font-size:12px; color:var(--muted); margin-top:16px;
     padding:8px; background:#f1f5f9; border-radius:6px;
@@ -125,7 +97,6 @@
   @media(max-width:600px) {
     .container { padding:24px 16px 60px; }
     .card { padding:20px; }
-    .rating-row { flex-direction:column; gap:12px; }
   }
 </style>
 </head>
@@ -135,13 +106,10 @@
 <div class="toast" id="toast"></div>
 
 <div class="container">
-  <div class="logo">
-    <h1><span>Idea</span> Friction</h1>
-  </div>
-
+  <div class="logo"><h1><span>Idea</span> Friction</h1></div>
   <div class="steps" id="stepDots"></div>
 
-  <!-- STEP 0: Idea Generation (start here directly) -->
+  <!-- STEP 0: Idea Generation -->
   <div id="step0" class="step-content">
     <div class="card">
       <h2>How would you improve lectures at your university? 💡</h2>
@@ -150,9 +118,7 @@
         This could be anything: the format, the room, the materials, how professors teach, use of technology, interaction with students, etc.
         Add up to 5 ideas.
       </p>
-
       <div id="ideaList"></div>
-
       <div id="ideaInput" style="margin-top:16px;">
         <textarea id="newIdea" rows="3" placeholder="Type your idea here..." maxlength="500"></textarea>
         <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
@@ -161,8 +127,6 @@
         </div>
       </div>
     </div>
-
-
     <div class="actions">
       <button class="btn btn-primary" onclick="goToRanking()" id="toRankBtn" disabled>Continue →</button>
     </div>
@@ -184,12 +148,12 @@
     </div>
   </div>
 
-  <!-- STEP 2: Peer Evaluation -->
+  <!-- STEP 2: Peer Ranking -->
   <div id="step2" class="step-content hidden">
     <div class="card">
       <h2>Rank these ideas 🔍</h2>
       <p class="subtitle">
-        Here are 5 ideas from other participants. Drag and drop to rank them from <strong>best (#1)</strong> to <strong>worst</strong>.
+        Here are ideas from other participants. Drag and drop to rank them from <strong>best (#1)</strong> to <strong>worst</strong>.
         Which idea would have the biggest positive impact on lectures?
       </p>
       <div id="peerRankList"></div>
@@ -211,6 +175,13 @@
 </div>
 
 <script>
+// ── Config ─────────────────────────────────────────────────
+const SB_URL = 'https://uyynxszpmtwfxmnwirjn.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5eW54c3pwbXR3ZnhtbndpcmpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NjE3NDcsImV4cCI6MjA5MTIzNzc0N30.WJexHxaof97Z_hNI9Dv6L4Cq7hlM366dGhu89McUNgE';
+
+const sb = supabase.createClient(SB_URL, SB_KEY);
+
+// ── State ──────────────────────────────────────────────────
 const TOTAL_STEPS = 4;
 const MAX_IDEAS = 5;
 const PEER_COUNT = 5;
@@ -218,67 +189,12 @@ let currentStep = 0;
 let ideas = [];
 let selfRanking = [];
 let peerIdeas = [];
-let peerRatings = {};
 let peerRanking = [];
 let participantId = crypto.randomUUID();
 let sessionId = crypto.randomUUID();
 let startTime = Date.now();
-let supabase = null;
 
-const SB_URL = 'https://uyynxszpmtwfxmnwirjn.supabase.co';
-const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5eW54c3pwbXR3ZnhtbndpcmpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NjE3NDcsImV4cCI6MjA5MTIzNzc0N30.WJexHxaof97Z_hNI9Dv6L4Cq7hlM366dGhu89McUNgE';
-
-function initSupabase(url, key) {
-  supabase = { url: url.replace(/\/$/, ''), key };
-  console.log('[Supabase] connected to', url);
-}
-async function sbInsert(table, rows) {
-  if (!supabase) { console.warn('No supabase'); return null; }
-  try {
-    const res = await fetch(`${supabase.url}/rest/v1/${table}`, {
-      method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        'apikey':supabase.key,
-        'Authorization':`Bearer ${supabase.key}`,
-        'Prefer':'return=representation,resolution=ignore-duplicates'
-      },
-      body:JSON.stringify(rows)
-    });
-    const text = await res.text();
-    console.log(`[sbInsert] ${table} → ${res.status}:`, text.slice(0, 500));
-    if (!res.ok) { showToast('Error saving: ' + res.status); return null; }
-    return text ? JSON.parse(text) : null;
-  } catch(e) { console.error('[sbInsert] error:', e); showToast('Connection error'); return null; }
-}
-async function sbSelect(table, query='') {
-  if (!supabase) return null;
-  try {
-    const res = await fetch(`${supabase.url}/rest/v1/${table}?${query}`, {
-      headers:{'apikey':supabase.key,'Authorization':`Bearer ${supabase.key}`}
-    });
-    const text = await res.text();
-    console.log(`[sbSelect] ${table} → ${res.status}:`, text.slice(0, 300));
-    if (!res.ok) return null;
-    return JSON.parse(text);
-  } catch(e) { console.error(e); return null; }
-}
-async function sbRpc(fn, params) {
-  if (!supabase) return null;
-  try {
-    const res = await fetch(`${supabase.url}/rest/v1/rpc/${fn}`, {
-      method:'POST',
-      headers:{'Content-Type':'application/json','apikey':supabase.key,'Authorization':`Bearer ${supabase.key}`},
-      body:JSON.stringify(params)
-    });
-    console.log(`[sbRpc] ${fn} → ${res.status}`);
-    if (!res.ok) return null;
-    const text = await res.text();
-    return text ? JSON.parse(text) : null;
-  } catch(e) { console.error(e); return null; }
-}
-
-// Navigation
+// ── Navigation ─────────────────────────────────────────────
 function showStep(n) {
   currentStep = n;
   document.querySelectorAll('.step-content').forEach((el,i) => el.classList.toggle('hidden', i!==n));
@@ -296,21 +212,18 @@ function renderDots() {
   }
 }
 
-// Phase 1: Idea Generation
+// ── Phase 1: Idea Generation ───────────────────────────────
 function addIdea() {
   const input = document.getElementById('newIdea');
   const text = input.value.trim();
   if (!text) { showToast('Please type an idea first'); return; }
-  if (ideas.length >= MAX_IDEAS) { showToast('Maximum 5 ideas reached'); return; }
+  if (ideas.length >= MAX_IDEAS) return;
   ideas.push({id:crypto.randomUUID(), text, timestamp:Date.now()});
   input.value = '';
   renderIdeas();
   input.focus();
 }
-function removeIdea(id) {
-  ideas = ideas.filter(i=>i.id!==id);
-  renderIdeas();
-}
+function removeIdea(id) { ideas = ideas.filter(i=>i.id!==id); renderIdeas(); }
 function renderIdeas() {
   document.getElementById('ideaList').innerHTML = ideas.map((idea,idx) => `
     <div class="idea-item">
@@ -324,23 +237,9 @@ function renderIdeas() {
   document.getElementById('newIdea').disabled = ideas.length >= MAX_IDEAS;
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  // Host redirect
-  if (window.location.search.includes('host')) {
-    window.location.href = 'admin.html';
-    return;
-  }
-  document.getElementById('newIdea').addEventListener('keydown', e => {
-    if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); addIdea(); }
-  });
-  // Auto-connect with hardcoded credentials
-  initSupabase(SB_URL, SB_KEY);
-  renderDots();
-});
-
-// Phase 2: Self-Ranking
+// ── Phase 2: Self-Ranking ──────────────────────────────────
 function goToRanking() {
-  if (ideas.length < 2) { showToast('Add at least 2 ideas'); return; }
+  if (ideas.length < 2) return;
   selfRanking = ideas.map(i=>i.id).sort(()=>Math.random()-.5);
   renderRankList('rankList', selfRanking, ideas);
   showStep(1);
@@ -384,29 +283,60 @@ function handleDrop(e) {
   renderRankList(cid, arr, src);
 }
 
-// Submit own ideas
+// ── Submit own ideas ───────────────────────────────────────
 async function submitOwnIdeas() {
   const genTime = Date.now() - startTime;
-  if (supabase) {
-    await sbInsert('participants', [{id:participantId, session_id:sessionId, created_at:new Date().toISOString(), generation_time_ms:genTime}]);
-    const rows = selfRanking.map((id,idx) => {
-      const idea = ideas.find(i=>i.id===id);
-      return {id:idea.id, participant_id:participantId, text:idea.text, self_rank:idx+1, created_at:new Date(idea.timestamp).toISOString(), review_count:0};
-    });
-    await sbInsert('ideas', rows);
-    await loadPeerIdeas();
-  } else {
-    loadDemoPeerIdeas();
-  }
+
+  // Insert participant
+  const {error: pErr} = await sb.from('participants').insert({
+    id: participantId,
+    session_id: sessionId,
+    created_at: new Date().toISOString(),
+    generation_time_ms: genTime
+  });
+  if (pErr) console.error('participants insert error:', pErr);
+
+  // Insert ideas
+  const ideaRows = selfRanking.map((id,idx) => {
+    const idea = ideas.find(i=>i.id===id);
+    return {
+      id: idea.id,
+      participant_id: participantId,
+      text: idea.text,
+      self_rank: idx+1,
+      created_at: new Date(idea.timestamp).toISOString(),
+      review_count: 0
+    };
+  });
+  const {error: iErr} = await sb.from('ideas').insert(ideaRows);
+  if (iErr) console.error('ideas insert error:', iErr);
+
+  // Load peer ideas
+  await loadPeerIdeas();
   showStep(2);
 }
 
 async function loadPeerIdeas() {
-  let result = await sbRpc('get_ideas_for_review', {reviewer_id:participantId, n:PEER_COUNT});
-  if (!result||result.length===0) result = await sbSelect('ideas',`participant_id=neq.${participantId}&order=review_count.asc&limit=${PEER_COUNT}`);
-  if (result&&result.length>0) {
-    peerIdeas = result.map(r=>({id:r.id, text:r.text, participant_id:r.participant_id}));
-  } else { loadDemoPeerIdeas(); }
+  // Try RPC first
+  const {data: rpcData} = await sb.rpc('get_ideas_for_review', {reviewer_id: participantId, n: PEER_COUNT});
+  if (rpcData && rpcData.length > 0) {
+    peerIdeas = rpcData.map(r=>({id:r.id, text:r.text, participant_id:r.participant_id}));
+    renderPeerIdeas();
+    return;
+  }
+
+  // Fallback: direct query
+  const {data} = await sb.from('ideas')
+    .select('*')
+    .neq('participant_id', participantId)
+    .order('review_count', {ascending:true})
+    .limit(PEER_COUNT);
+
+  if (data && data.length > 0) {
+    peerIdeas = data.map(r=>({id:r.id, text:r.text, participant_id:r.participant_id}));
+  } else {
+    loadDemoPeerIdeas();
+  }
   renderPeerIdeas();
 }
 
@@ -423,32 +353,51 @@ function loadDemoPeerIdeas() {
   ];
   const shuffled = demo.sort(()=>Math.random()-.5).slice(0, PEER_COUNT);
   peerIdeas = shuffled.map(text=>({id:crypto.randomUUID(), text, participant_id:'demo'}));
-  renderPeerIdeas();
 }
 
-// Phase 3: Peer Ranking (no ratings, just rank)
+// ── Phase 3: Peer Ranking ──────────────────────────────────
 function renderPeerIdeas() {
   peerRanking = peerIdeas.map(i=>i.id).sort(()=>Math.random()-.5);
   renderRankList('peerRankList', peerRanking, peerIdeas);
 }
 
-// Submit peer evaluation
 async function submitPeerEval() {
-  if (supabase) {
-    const reviews = peerRanking.map((id,idx)=>({
-      id:crypto.randomUUID(), idea_id:id, reviewer_id:participantId,
-      peer_rank:idx+1, created_at:new Date().toISOString()
-    }));
-    await sbInsert('reviews', reviews);
-    for (const id of peerRanking) await sbRpc('increment_review_count',{idea_uuid:id});
+  const reviews = peerRanking.map((id,idx)=>({
+    id: crypto.randomUUID(),
+    idea_id: id,
+    reviewer_id: participantId,
+    peer_rank: idx+1,
+    created_at: new Date().toISOString()
+  }));
+
+  const {error: rErr} = await sb.from('reviews').upsert(reviews, {onConflict:'idea_id,reviewer_id'});
+  if (rErr) console.error('reviews insert error:', rErr);
+
+  // Increment review counts
+  for (const id of peerRanking) {
+    await sb.rpc('increment_review_count', {idea_uuid: id});
   }
+
   document.getElementById('sessionInfo').textContent = `Session: ${sessionId.slice(0,8)}`;
   showStep(3);
 }
 
-// Utils
+// ── Utils ──────────────────────────────────────────────────
 function escHtml(s) { const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
 function showToast(msg) { const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
+
+// ── Init ───────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  if (window.location.search.includes('host')) {
+    window.location.href = 'admin.html';
+    return;
+  }
+  document.getElementById('newIdea').addEventListener('keydown', e => {
+    if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); addIdea(); }
+  });
+  renderDots();
+  console.log('[Idea Friction] Ready. Supabase client initialized.');
+});
 </script>
 </body>
 </html>

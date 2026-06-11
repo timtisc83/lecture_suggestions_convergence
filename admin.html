@@ -373,37 +373,43 @@ async function sbSelect(table, query = '') {
   if (!sb) return null;
   try {
     const res = await fetch(`${sb.url}/rest/v1/${table}?${query}`, {
-      headers: { 'apikey': sb.key, 'Authorization': `Bearer ${sb.key}` }
+      headers: { 'apikey': sb.key, 'Authorization': `Bearer ${sb.key}`, 'Accept': 'application/json' }
     });
-    if (!res.ok) return null;
-    return await res.json();
-  } catch(e) { return null; }
+    const text = await res.text();
+    console.log(`[sbSelect] ${table} → ${res.status}:`, text.slice(0, 300));
+    if (!res.ok) { showToast(`Error on ${table}: ${res.status}`); return null; }
+    return JSON.parse(text);
+  } catch(e) { console.error(e); showToast('Fetch error: ' + e.message); return null; }
 }
 
 async function sbDelete(table) {
   if (!sb) return null;
   try {
-    await fetch(`${sb.url}/rest/v1/${table}?id=neq.00000000-0000-0000-0000-000000000000`, {
+    const res = await fetch(`${sb.url}/rest/v1/${table}?id=gte.00000000-0000-0000-0000-000000000000`, {
       method: 'DELETE',
       headers: { 'apikey': sb.key, 'Authorization': `Bearer ${sb.key}` }
     });
-  } catch(e) {}
+    console.log(`[sbDelete] ${table} → ${res.status}`);
+  } catch(e) { console.error(e); }
 }
 
 // ── Data loading ───────────────────────────────────────────
 async function refreshAll() {
-  if (!sb) return;
+  if (!sb) { showToast('Not connected'); return; }
   showToast('Loading data…');
   const [p, i, r] = await Promise.all([
     sbSelect('participants', 'order=created_at.desc'),
     sbSelect('ideas', 'order=created_at.desc'),
     sbSelect('reviews', 'order=created_at.desc')
   ]);
-  allParticipants = p || [];
-  allIdeas = i || [];
-  allReviews = r || [];
+  console.log('participants:', p);
+  console.log('ideas:', i);
+  console.log('reviews:', r);
+  allParticipants = Array.isArray(p) ? p : [];
+  allIdeas = Array.isArray(i) ? i : [];
+  allReviews = Array.isArray(r) ? r : [];
   renderAll();
-  showToast('Data refreshed');
+  showToast(`Loaded: ${allParticipants.length} participants, ${allIdeas.length} ideas, ${allReviews.length} reviews`);
 }
 
 function renderAll() {

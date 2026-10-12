@@ -3,401 +3,605 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Idea Friction</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.8/dist/umd/supabase.min.js"></script>
+<title>Campus Idea Tournament · ODCE TU Hamburg</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap" rel="stylesheet" />
 <style>
+  /* ODCE · TU Hamburg look: TUHH turquoise (#00C1D4) + deep navy, angular shapes */
   :root {
-    --bg: #f8f9fb; --card: #ffffff; --primary: #2563eb; --primary-hover: #1d4ed8;
-    --accent: #10b981; --danger: #ef4444; --text: #1e293b; --muted: #64748b;
-    --border: #e2e8f0; --radius: 12px;
+    --tuerkis:#00C1D4; --tuerkis-hover:#00ABBD; --tuerkis-ink:#00707C; --tuerkis-soft:#E6F9FB;
+    --navy:#0E1A33; --violet:#7200FE; --violet-soft:#F4ECFF; --blue:#143BFF; --mint:#5AFFC5;
+    --bg:#F4F6F8; --card:#fff; --text:#0E1A33; --muted:#566275; --border:#DCE2E8;
+    --danger:#C81E1E; --radius:4px;
   }
   * { margin:0; padding:0; box-sizing:border-box; }
-  body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
-  .progress-bar { position:fixed; top:0; left:0; width:100%; height:4px; background:var(--border); z-index:100; }
-  .progress-fill { height:100%; background:linear-gradient(90deg,var(--primary),var(--accent)); transition:width .4s ease; }
-  .container { max-width:720px; margin:0 auto; padding:40px 24px 80px; }
-  .logo { text-align:center; margin-bottom:32px; }
-  .logo h1 { font-size:28px; font-weight:700; letter-spacing:-0.5px; }
-  .logo h1 span { color:var(--primary); }
-  .card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:32px; margin-bottom:24px; box-shadow:0 1px 3px rgba(0,0,0,.04); }
-  .card h2 { font-size:20px; font-weight:600; margin-bottom:4px; }
-  .card .subtitle { color:var(--muted); font-size:14px; margin-bottom:24px; line-height:1.5; }
-  .steps { display:flex; gap:8px; margin-bottom:32px; justify-content:center; }
-  .step-dot { width:10px; height:10px; border-radius:50%; background:var(--border); transition:all .3s; }
-  .step-dot.active { background:var(--primary); transform:scale(1.3); }
-  .step-dot.done { background:var(--accent); }
-  textarea {
-    width:100%; padding:12px 16px; border:1px solid var(--border); border-radius:8px;
-    font-family:inherit; font-size:14px; transition:border .2s; outline:none; resize:vertical;
-  }
-  textarea:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(37,99,235,.1); }
-  .btn {
-    display:inline-flex; align-items:center; gap:8px; padding:12px 24px; border:none;
-    border-radius:8px; font-family:inherit; font-size:14px; font-weight:600;
-    cursor:pointer; transition:all .2s;
-  }
-  .btn-primary { background:var(--primary); color:#fff; }
-  .btn-primary:hover { background:var(--primary-hover); transform:translateY(-1px); }
-  .btn-primary:disabled { opacity:.5; cursor:not-allowed; transform:none; }
-  .btn-outline { background:transparent; color:var(--primary); border:1px solid var(--primary); }
-  .btn-sm { padding:8px 14px; font-size:13px; }
-  .actions { display:flex; gap:12px; justify-content:flex-end; margin-top:24px; }
-  .idea-item {
-    display:flex; align-items:flex-start; gap:12px; padding:16px;
-    border:1px solid var(--border); border-radius:8px; margin-bottom:8px; background:#fafbfc;
-  }
-  .idea-number {
-    min-width:28px; height:28px; border-radius:50%; background:var(--primary);
-    color:#fff; display:flex; align-items:center; justify-content:center;
-    font-size:12px; font-weight:700; flex-shrink:0;
-  }
-  .idea-text { flex:1; font-size:14px; line-height:1.5; }
-  .idea-actions button {
-    width:28px; height:28px; border:none; background:transparent;
-    cursor:pointer; border-radius:6px; font-size:16px; color:var(--muted);
-    display:flex; align-items:center; justify-content:center;
-  }
-  .idea-actions button:hover { background:var(--border); }
-  .rank-item {
-    display:flex; align-items:center; gap:12px; padding:16px;
-    border:2px solid var(--border); border-radius:8px; margin-bottom:8px;
-    background:#fff; cursor:grab; user-select:none;
-  }
-  .rank-item:active { cursor:grabbing; }
-  .rank-item.dragging { opacity:.5; border-color:var(--primary); }
-  .rank-item.drag-over { border-color:var(--accent); background:#f0fdf4; }
-  .rank-badge {
-    min-width:32px; height:32px; border-radius:8px; display:flex;
-    align-items:center; justify-content:center; font-weight:700; font-size:14px; flex-shrink:0;
-  }
-  .rank-badge.gold { background:#fef3c7; color:#92400e; }
-  .rank-badge.silver { background:#e2e8f0; color:#475569; }
-  .rank-badge.bronze { background:#fed7aa; color:#9a3412; }
-  .rank-badge.r4 { background:#e0e7ff; color:#3730a3; }
-  .rank-badge.r5 { background:#f1f5f9; color:#64748b; }
-  .rank-text { flex:1; font-size:14px; line-height:1.5; }
-  .drag-handle { color:var(--muted); font-size:18px; flex-shrink:0; }
-  .counter { text-align:right; font-size:13px; color:var(--muted); margin-top:8px; }
-  .thank-you { text-align:center; padding:48px 24px; }
-  .thank-you .icon { font-size:64px; margin-bottom:16px; }
-  .thank-you h2 { font-size:24px; margin-bottom:8px; }
-  .thank-you p { color:var(--muted); line-height:1.6; }
-  .hidden { display:none !important; }
-  .toast {
-    position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
-    background:#1e293b; color:#fff; padding:12px 24px; border-radius:8px;
-    font-size:14px; z-index:200; opacity:0; transition:opacity .3s; pointer-events:none;
-  }
+  body { font-family:'DM Sans',system-ui,sans-serif; background:var(--bg); color:var(--text); min-height:100vh; line-height:1.55; }
+  .topband { height:6px; background:var(--tuerkis); }
+  .masthead { background:#fff; border-bottom:1px solid var(--border); }
+  .masthead .in { max-width:760px; margin:0 auto; padding:14px 20px; display:flex; align-items:center; gap:14px; }
+  .mark { display:flex; flex-direction:column; line-height:1.15; }
+  .mark .u { font-weight:700; font-size:15px; letter-spacing:-.01em; }
+  .mark .i { font-size:12px; color:var(--muted); }
+  .mark-sq { width:34px; height:34px; background:var(--tuerkis); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:11px; color:var(--navy); letter-spacing:.02em; flex-shrink:0; }
+  .container { max-width:760px; margin:0 auto; padding:28px 20px 80px; }
+  .brand { margin-bottom:22px; }
+  .brand .eyebrow { font-size:12px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--tuerkis-ink); }
+  .brand h1 { font-family:'Source Serif 4',Georgia,serif; font-size:32px; font-weight:700; letter-spacing:-.4px; line-height:1.15; }
+
+  /* Phase tracker as a tournament bracket */
+  .track { display:grid; grid-template-columns:repeat(4,1fr); gap:0; margin:0 0 24px; list-style:none; border:1px solid var(--border); background:#fff; }
+  .track li { position:relative; padding:10px 12px; border-right:1px solid var(--border); }
+  .track li:last-child { border-right:none; }
+  .track .num { font-size:11px; font-weight:700; color:var(--muted); letter-spacing:.08em; }
+  .track .lbl { font-size:14px; font-weight:600; color:var(--muted); }
+  .track li.active { background:var(--tuerkis); }
+  .track li.active .num, .track li.active .lbl { color:var(--navy); }
+  .track li.done { background:var(--tuerkis-soft); }
+  .track li.done .num, .track li.done .lbl { color:var(--tuerkis-ink); }
+  .track li.done .num::after { content:" ✓"; }
+
+  .card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:28px; margin-bottom:16px; }
+  .card h2 { font-family:'Source Serif 4',Georgia,serif; font-size:23px; font-weight:700; margin-bottom:8px; letter-spacing:-.2px; line-height:1.25; }
+  .card h3 { font-size:17px; font-weight:700; margin-bottom:4px; }
+  .phase-tag { display:inline-block; font-size:12px; font-weight:700; color:var(--navy); background:var(--tuerkis-soft); border-left:3px solid var(--tuerkis); padding:3px 8px; text-transform:uppercase; letter-spacing:.08em; margin-bottom:10px; }
+  .sub { color:var(--muted); font-size:14.5px; margin-bottom:18px; }
+  .sub strong { color:var(--text); }
+  .prompt { font-size:16px; margin-bottom:18px; }
+
+  .phase-list { list-style:none; display:grid; gap:8px; margin:6px 0 20px; counter-reset:ph; }
+  .phase-list li { display:flex; gap:12px; align-items:flex-start; font-size:14.5px; }
+  .phase-list li::before { counter-increment:ph; content:counter(ph); min-width:24px; height:24px; background:var(--navy); color:#fff; font-weight:700; font-size:12px; display:flex; align-items:center; justify-content:center; margin-top:1px; }
+
+  .notices { display:grid; gap:10px; }
+  .notice { display:flex; gap:12px; border-radius:var(--radius); padding:14px 16px; font-size:14px; border-left:4px solid; }
+  .notice .ic { font-size:18px; line-height:1.3; }
+  .notice strong { display:block; }
+  .notice.ai { background:var(--violet-soft); border-color:var(--violet); color:#3D0087; }
+  .notice.anon { background:var(--tuerkis-soft); border-color:var(--tuerkis); color:var(--navy); }
+
+  textarea { width:100%; padding:12px 14px; border:1px solid #C5CED8; border-radius:var(--radius); font:inherit; font-size:15px; outline:none; resize:vertical; min-height:84px; background:#fff; color:var(--text); }
+  textarea:focus { border-color:var(--tuerkis-ink); box-shadow:0 0 0 3px rgba(0,193,212,.25); }
+
+  .btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:12px 22px; border:none; border-radius:var(--radius); font:inherit; font-size:15px; font-weight:700; cursor:pointer; transition:background .15s; }
+  .btn:focus-visible, .icon-btn:focus-visible, input:focus-visible, .btn-link:focus-visible { outline:3px solid var(--blue); outline-offset:2px; }
+  .btn-primary { background:var(--tuerkis); color:var(--navy); }
+  .btn-primary:hover:not(:disabled) { background:var(--tuerkis-hover); }
+  .btn-primary:disabled { background:#D5DCE3; color:#7A8596; cursor:not-allowed; }
+  .btn-dark { background:var(--navy); color:#fff; }
+  .btn-dark:hover:not(:disabled) { background:#1E2E52; }
+  .btn-dark:disabled { background:#D5DCE3; color:#7A8596; cursor:not-allowed; }
+  .btn-sm { padding:8px 14px; font-size:14px; }
+  .btn-link { background:none; border:none; color:var(--muted); text-decoration:underline; font:inherit; font-size:14px; cursor:pointer; }
+  .btn .spin { width:14px; height:14px; border:2px solid rgba(14,26,51,.3); border-top-color:var(--navy); border-radius:50%; animation:spin .8s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  .actions { display:flex; gap:12px; justify-content:flex-end; align-items:center; margin-top:8px; flex-wrap:wrap; }
+  .actions .hint { margin-right:auto; font-size:14px; color:var(--muted); }
+  .error { display:none; background:#FDF0F0; border-left:4px solid var(--danger); color:#8B1414; padding:10px 14px; font-size:14px; margin-top:12px; }
+  .error.show { display:block; }
+
+  .idea-list { list-style:none; display:grid; gap:8px; margin-bottom:14px; }
+  .idea-item { display:flex; gap:12px; align-items:flex-start; padding:12px 14px; border:1px solid var(--border); border-left:3px solid var(--tuerkis); border-radius:var(--radius); background:#FAFCFD; }
+  .idea-no { min-width:26px; height:26px; background:var(--navy); color:#fff; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .idea-text { flex:1; font-size:15px; white-space:pre-wrap; word-break:break-word; }
+  .icon-btn { width:34px; height:34px; border:none; background:transparent; border-radius:var(--radius); color:var(--muted); cursor:pointer; font-size:14px; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .icon-btn:hover:not(:disabled) { background:var(--tuerkis-soft); color:var(--navy); }
+  .icon-btn:disabled { opacity:.25; cursor:default; }
+  .input-row { display:flex; justify-content:space-between; align-items:center; margin-top:10px; gap:12px; }
+  .counter { font-size:14px; color:var(--muted); font-weight:500; }
+
+  /* Ranking */
+  .rank-list { list-style:none; display:grid; gap:8px; }
+  .rank-item { display:flex; align-items:center; gap:12px; padding:12px 10px 12px 12px; border:1px solid var(--border); border-radius:var(--radius); background:#fff; cursor:grab; user-select:none; }
+  .rank-item.dragging { opacity:.5; border-color:var(--tuerkis-ink); }
+  .rank-item.drag-over { border-color:var(--tuerkis); background:var(--tuerkis-soft); }
+  .rank-badge { min-width:38px; height:38px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; flex-shrink:0; background:#EEF1F4; color:var(--muted); }
+  .rank-badge.r1 { background:var(--tuerkis); color:var(--navy); }
+  .rank-badge.r2 { background:#9FE7EF; color:var(--navy); }
+  .rank-badge.r3 { background:var(--tuerkis-soft); color:var(--navy); }
+  .rank-text { flex:1; font-size:15px; word-break:break-word; }
+  .rank-move { display:flex; flex-direction:column; gap:2px; }
+
+  /* Look-only */
+  .view-list { list-style:none; display:grid; gap:10px; }
+  .view-item { padding:14px 16px; border:1px solid var(--border); border-left:3px solid var(--tuerkis); border-radius:var(--radius); background:#FAFCFD; font-size:15px; white-space:pre-wrap; word-break:break-word; }
+
+  /* Sliders */
+  .rate-item { padding:16px; border:1px solid var(--border); border-radius:var(--radius); margin-bottom:10px; background:#fff; }
+  .rate-item.done { border-left:3px solid var(--tuerkis); }
+  .rate-text { font-size:15px; margin-bottom:12px; white-space:pre-wrap; word-break:break-word; }
+  .rate-row { display:flex; align-items:center; gap:14px; }
+  .rate-row input[type=range] { flex:1; accent-color:var(--tuerkis-ink); height:28px; cursor:pointer; }
+  .rate-row input.untouched { opacity:.35; }
+  .rate-val { min-width:92px; text-align:right; font-size:14px; font-weight:700; color:var(--tuerkis-ink); }
+  .rate-val.empty-val { color:var(--muted); font-weight:500; }
+  .ticks { display:flex; justify-content:space-between; font-size:11px; color:var(--muted); margin:2px 106px 0 0; padding:0 4px; }
+
+  /* Selection */
+  .select-item { display:flex; gap:14px; align-items:flex-start; padding:14px 16px; border:1px solid var(--border); border-radius:var(--radius); margin-bottom:8px; cursor:pointer; background:#fff; }
+  .select-item:hover { border-color:#AEB9C5; }
+  .select-item.on { border-color:var(--tuerkis); background:var(--tuerkis-soft); box-shadow:inset 3px 0 0 var(--tuerkis); }
+  .select-item input { width:20px; height:20px; accent-color:var(--tuerkis-ink); margin-top:2px; flex-shrink:0; cursor:pointer; }
+  .select-item span { font-size:15px; word-break:break-word; white-space:pre-wrap; }
+  .confirm { display:flex; gap:12px; align-items:flex-start; padding:14px 16px; border-radius:var(--radius); background:var(--violet-soft); border-left:4px solid var(--violet); font-size:14.5px; color:#3D0087; cursor:pointer; margin-top:16px; }
+  .confirm input { width:20px; height:20px; accent-color:var(--violet); flex-shrink:0; margin-top:2px; }
+  .small-anon { font-size:13px; color:var(--muted); margin-top:12px; display:flex; gap:8px; }
+
+  /* Waiting */
+  .waiting { text-align:center; padding:36px 16px; }
+  .waiting .pulse { width:56px; height:56px; margin:6px auto 18px; background:var(--tuerkis-soft); position:relative; }
+  .waiting .pulse::after { content:""; position:absolute; inset:16px; background:var(--tuerkis); animation:pulse 1.6s ease-in-out infinite; }
+  @keyframes pulse { 50% { transform:scale(.55) rotate(45deg); opacity:.6; } }
+  .waiting p { color:var(--muted); font-size:14.5px; }
+
+  .done-card { text-align:center; padding:48px 24px; border-top:6px solid var(--tuerkis); }
+  .done-card .big { font-size:52px; margin-bottom:10px; }
+  .done-card h2 { font-size:28px; }
+  .done-card p { color:var(--muted); }
+  .meta { font-size:12px; color:var(--muted); margin-top:16px; }
+
+  .footer { max-width:760px; margin:0 auto; padding:0 20px 40px; font-size:12px; color:var(--muted); }
+  .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:var(--navy); color:#fff; padding:12px 22px; border-radius:var(--radius); font-size:14px; z-index:200; opacity:0; transition:opacity .3s; pointer-events:none; }
   .toast.show { opacity:1; }
-  .session-info {
-    text-align:center; font-size:12px; color:var(--muted); margin-top:16px;
-    padding:8px; background:#f1f5f9; border-radius:6px;
+  .demo-flag { position:fixed; top:10px; right:10px; background:var(--mint); color:var(--navy); font-size:11px; font-weight:700; padding:4px 8px; z-index:300; }
+  .sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); }
+
+  @media (max-width:600px) {
+    .container { padding:20px 12px 60px; }
+    .card { padding:20px 16px; }
+    .brand h1 { font-size:26px; }
+    .track li { padding:8px 6px; }
+    .track .lbl { font-size:12px; }
+    .track .num { font-size:10px; }
+    .rate-val { min-width:70px; }
+    .ticks { margin-right:84px; }
+    .mark .i { display:none; }
   }
-  @media(max-width:600px) {
-    .container { padding:24px 16px 60px; }
-    .card { padding:20px; }
-  }
+  @media (prefers-reduced-motion:reduce) { * { animation:none !important; transition:none !important; } }
 </style>
 </head>
 <body>
-
-<div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
-<div class="toast" id="toast"></div>
-
+<div class="topband" aria-hidden="true"></div>
+<div class="masthead"><div class="in">
+  <div class="mark-sq" aria-hidden="true">ODCE</div>
+  <div class="mark"><span class="u">TU Hamburg · ODCE</span><span class="i">Institute for Organizational Design and Collaboration Engineering</span></div>
+</div></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 <div class="container">
-  <div class="logo"><h1><span>Idea</span> Friction</h1></div>
-  <div class="steps" id="stepDots"></div>
-
-  <!-- STEP 0: Idea Generation -->
-  <div id="step0" class="step-content">
-    <div class="card">
-      <h2>How would you improve lectures at your university? 💡</h2>
-      <p class="subtitle">
-        Think about this lecture or others you attend — what would make them more engaging, more useful, or easier to learn from?
-        This could be anything: the format, the room, the materials, how professors teach, use of technology, interaction with students, etc.
-        Add up to 5 ideas.
-      </p>
-      <div id="ideaList"></div>
-      <div id="ideaInput" style="margin-top:16px;">
-        <textarea id="newIdea" rows="3" placeholder="Type your idea here..." maxlength="500"></textarea>
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
-          <span class="counter" id="ideaCounter">0 / 5 ideas</span>
-          <button class="btn btn-primary btn-sm" onclick="addIdea()" id="addIdeaBtn">+ Add Idea</button>
-        </div>
-      </div>
-    </div>
-    <div class="actions">
-      <button class="btn btn-primary" onclick="goToRanking()" id="toRankBtn" disabled>Continue →</button>
-    </div>
-  </div>
-
-  <!-- STEP 1: Self-Ranking -->
-  <div id="step1" class="step-content hidden">
-    <div class="card">
-      <h2>Rank your ideas 🏆</h2>
-      <p class="subtitle">
-        Drag and drop to order your ideas from <strong>best (#1)</strong> to <strong>worst</strong>.
-        Which idea would have the biggest positive impact on lectures?
-      </p>
-      <div id="rankList"></div>
-    </div>
-    <div class="actions">
-      <button class="btn btn-outline" onclick="showStep(0)">← Back</button>
-      <button class="btn btn-primary" onclick="submitOwnIdeas()">Continue →</button>
-    </div>
-  </div>
-
-  <!-- STEP 2: Peer Ranking -->
-  <div id="step2" class="step-content hidden">
-    <div class="card">
-      <h2>Rank these ideas 🔍</h2>
-      <p class="subtitle">
-        Here are ideas from other participants. Drag and drop to rank them from <strong>best (#1)</strong> to <strong>worst</strong>.
-        Which idea would have the biggest positive impact on lectures?
-      </p>
-      <div id="peerRankList"></div>
-    </div>
-    <div class="actions">
-      <button class="btn btn-primary" onclick="submitPeerEval()">Submit →</button>
-    </div>
-  </div>
-
-  <!-- STEP 3: Thank You -->
-  <div id="step3" class="step-content hidden">
-    <div class="card thank-you">
-      <div class="icon">🎉</div>
-      <h2>Thank you!</h2>
-      <p>Your ideas and evaluations have been recorded.</p>
-      <div class="session-info" id="sessionInfo"></div>
-    </div>
-  </div>
+  <header class="brand">
+    <div class="eyebrow">Campus Idea Tournament</div>
+    <h1>Make our campus better — with your ideas</h1>
+  </header>
+  <ol class="track" id="track" aria-label="Tournament phases"></ol>
+  <main id="app"></main>
 </div>
+<footer class="footer">Anonymous study by the Institute for Organizational Design and Collaboration Engineering (ODCE), TU Hamburg.</footer>
 
 <script>
-// ── Config ─────────────────────────────────────────────────
+/* ================= CONFIG ================= */
 const SB_URL = 'https://uyynxszpmtwfxmnwirjn.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5eW54c3pwbXR3ZnhtbndpcmpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NjE3NDcsImV4cCI6MjA5MTIzNzc0N30.WJexHxaof97Z_hNI9Dv6L4Cq7hlM366dGhu89McUNgE';
 
-const sb = supabase.createClient(SB_URL, SB_KEY);
+// Which ideas do peers evaluate in phase 4?
+//  'submitted' = only ideas others submitted (as described to participants)
+//  'all'       = all ideas of others, submitted or not (needed to measure selection quality)
+const PEER_POOL = 'all';
+const PEER_COUNT = 5;            // ideas each participant ranks in phase 4
+const MIN_PEER = 2;              // minimum to proceed after waiting
+const MIN_IDEAS = 2;             // minimum ideas in phase 1
+const WAIT_FALLBACK_MS = 60000;  // after this, accept fewer than PEER_COUNT
+const SKIP_AFTER_MS = 180000;    // after this, allow finishing without evaluation
+const POLL_MS = 4000;
 
-// ── State ──────────────────────────────────────────────────
-const TOTAL_STEPS = 4;
-const MAX_IDEAS = 5;
-const PEER_COUNT = 5;
-let currentStep = 0;
-let ideas = [];
-let selfRanking = [];
-let peerIdeas = [];
-let peerRanking = [];
-let participantId = crypto.randomUUID();
-let sessionId = crypto.randomUUID();
-let startTime = Date.now();
+/* URL options:
+   ?host           -> admin dashboard
+   ?demo           -> local test mode, nothing is saved
+   ?demo&c=1|2|3   -> test a specific screening condition */
+const params = new URLSearchParams(location.search);
+if (params.has('host')) location.replace('admin.html');
+const DEMO = params.has('demo');
+const FORCED_C = [1,2,3].includes(+params.get('c')) ? +params.get('c') : null;
 
-// ── Navigation ─────────────────────────────────────────────
-function showStep(n) {
-  currentStep = n;
-  document.querySelectorAll('.step-content').forEach((el,i) => el.classList.toggle('hidden', i!==n));
-  document.getElementById('progressFill').style.width = (n/(TOTAL_STEPS-1)*100)+'%';
-  renderDots();
-  window.scrollTo({top:0,behavior:'smooth'});
-}
-function renderDots() {
-  const c = document.getElementById('stepDots');
-  c.innerHTML = '';
-  for (let i=0;i<TOTAL_STEPS;i++) {
-    const d = document.createElement('div');
-    d.className = 'step-dot'+(i===currentStep?' active':'')+(i<currentStep?' done':'');
-    c.appendChild(d);
+const PHASES = ['Creation','Screening','Selection','Evaluation'];
+const CRITERION = 'Which idea would improve the campus the most?';
+
+/* ================= STATE ================= */
+const uuid = () => (crypto.randomUUID ? crypto.randomUUID() :
+  'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random()*16|0; return (c==='x'?r:(r&3|8)).toString(16); }));
+
+const S = {
+  pid: uuid(), session: uuid(), condition: null, phase: 0, phaseStart: Date.now(),
+  ideas: [], created: 0, draftPaste: { count:0, chars:0 },
+  screenOrder: [], rankOrder: [], scores: {}, interactions: 0,
+  selectOrder: [], selected: new Set(), noAi: false,
+  peerIdeas: [], peerOrder: [], finished: false
+};
+
+/* ================= BACKEND ================= */
+async function rpc(fn, args) {
+  if (DEMO) return null;
+  let lastErr;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const res = await fetch(`${SB_URL}/rest/v1/rpc/${fn}`, {
+        method: 'POST',
+        headers: { 'Content-Type':'application/json', apikey:SB_KEY, Authorization:`Bearer ${SB_KEY}` },
+        body: JSON.stringify(args)
+      });
+      const text = await res.text();
+      let data = null; try { data = text ? JSON.parse(text) : null; } catch (_) {}
+      if (!res.ok) { console.error(`[rpc] ${fn}`, res.status, text); throw new Error((data && data.message) || `HTTP ${res.status}`); }
+      return data;
+    } catch (e) { lastErr = e; await new Promise(r => setTimeout(r, 700 * (attempt + 1))); }
   }
+  throw lastErr;
 }
 
-// ── Phase 1: Idea Generation ───────────────────────────────
+/* ================= HELPERS ================= */
+const $ = s => document.querySelector(s);
+const app = $('#app');
+const esc = s => { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; };
+const shuffle = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const ideaText = id => (S.ideas.find(i => i.id === id) || S.peerIdeas.find(i => i.id === id) || {}).text || '';
+const elapsed = () => Date.now() - S.phaseStart;
+
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 2600); }
+function setBusy(btn, on, label) {
+  if (!btn) return;
+  if (on) { btn.dataset.label = btn.innerHTML; btn.disabled = true; btn.innerHTML = `<span class="spin"></span> ${label || 'Saving…'}`; }
+  else { btn.disabled = false; if (btn.dataset.label) btn.innerHTML = btn.dataset.label; }
+}
+function showError(msg) { const e = $('#err'); if (e) { e.textContent = msg; e.classList.add('show'); } }
+function clearError() { const e = $('#err'); if (e) e.classList.remove('show'); }
+const SAVE_FAIL = "We couldn't save your answers. Please check your internet connection and press the button again.";
+
+function setPhase(n) {
+  S.phase = n; S.phaseStart = Date.now();
+  $('#track').innerHTML = PHASES.map((p, i) =>
+    `<li class="${i + 1 < n ? 'done' : i + 1 === n ? 'active' : ''}" ${i + 1 === n ? 'aria-current="step"' : ''}>
+       <div class="num">PHASE ${i + 1}</div><div class="lbl">${p}</div></li>`).join('');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+window.addEventListener('beforeunload', e => { if (S.phase >= 1 && !S.finished && (S.ideas.length || S.phase > 1)) { e.preventDefault(); e.returnValue = ''; } });
+
+/* ================= RANK LIST (drag on desktop, buttons everywhere) ================= */
+function rankList(el, order, onChange) {
+  let dragId = null;
+  const render = () => {
+    el.innerHTML = order.map((id, i) => `
+      <li class="rank-item" draggable="true" data-id="${id}">
+        <span class="rank-badge ${i < 3 ? 'r' + (i + 1) : ''}" aria-hidden="true">#${i + 1}</span>
+        <span class="rank-text"><span class="sr-only">Rank ${i + 1}: </span>${esc(ideaText(id))}</span>
+        <span class="rank-move">
+          <button type="button" class="icon-btn" data-move="-1" ${i === 0 ? 'disabled' : ''} aria-label="Move up">▲</button>
+          <button type="button" class="icon-btn" data-move="1" ${i === order.length - 1 ? 'disabled' : ''} aria-label="Move down">▼</button>
+        </span>
+      </li>`).join('');
+  };
+  const changed = () => { render(); onChange && onChange(); };
+  el.onclick = e => {
+    const b = e.target.closest('[data-move]'); if (!b) return;
+    const id = b.closest('.rank-item').dataset.id, dir = +b.dataset.move;
+    const i = order.indexOf(id), j = i + dir;
+    if (j < 0 || j >= order.length) return;
+    [order[i], order[j]] = [order[j], order[i]];
+    changed();
+    const again = el.querySelector(`[data-id="${id}"] [data-move="${dir}"]`);
+    (again && !again.disabled ? again : el.querySelector(`[data-id="${id}"] [data-move="${-dir}"]`))?.focus();
+  };
+  el.ondragstart = e => { const it = e.target.closest('.rank-item'); if (!it) return; dragId = it.dataset.id; it.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', dragId); } catch (_) {} };
+  el.ondragover = e => { if (!dragId) return; e.preventDefault(); el.querySelectorAll('.drag-over').forEach(x => x.classList.remove('drag-over')); const it = e.target.closest('.rank-item'); if (it && it.dataset.id !== dragId) it.classList.add('drag-over'); };
+  el.ondrop = e => {
+    e.preventDefault(); const it = e.target.closest('.rank-item');
+    if (it && dragId && it.dataset.id !== dragId) { const f = order.indexOf(dragId), t = order.indexOf(it.dataset.id); order.splice(f, 1); order.splice(t, 0, dragId); changed(); }
+    dragId = null;
+  };
+  el.ondragend = () => { dragId = null; el.querySelectorAll('.dragging,.drag-over').forEach(x => x.classList.remove('dragging', 'drag-over')); };
+  render();
+}
+
+/* ================= PHASE 1: CREATION ================= */
+function renderCreation() {
+  setPhase(1);
+  app.innerHTML = `
+    <section class="card">
+      <h2>How would you improve our campus?</h2>
+      <p class="prompt">Think about your everyday life at the university — studying and lectures, the library and places to work, food and coffee, spaces to relax or meet others, getting around campus, digital services, events, sustainability, or how students and staff work together. What would make the campus a better place to study, work and spend time? Small fixes and big ideas are both welcome.</p>
+      <p class="sub" style="margin-bottom:8px"><strong>This is an idea tournament with four phases:</strong></p>
+      <ol class="phase-list">
+        <li><span><strong>Idea creation</strong> — come up with as many ideas as you can.</span></li>
+        <li><span><strong>Idea screening</strong> — take a closer look at your own ideas.</span></li>
+        <li><span><strong>Idea selection</strong> — decide which of your ideas you submit to the tournament.</span></li>
+        <li><span><strong>Idea evaluation</strong> — rank ideas from other participants.</span></li>
+      </ol>
+      <div class="notices">
+        <div class="notice anon" role="note">
+          <span class="ic" aria-hidden="true">🔒</span>
+          <span><strong>Completely anonymous.</strong>We do not ask for your name, e-mail, student ID or any other personal details. Your ideas are stored without any link to you and are shown to other participants anonymously. Nobody — including the lecturers — can see who wrote which idea.</span>
+        </div>
+        <div class="notice ai" role="note">
+          <span class="ic" aria-hidden="true">✋</span>
+          <span><strong>No AI, please.</strong>This tournament is about your own ideas. Do not use ChatGPT, Copilot or any other AI tool, and do not copy ideas from the internet or from others.</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <span class="phase-tag">Phase 1 · Idea creation</span>
+      <h3>Add your ideas</h3>
+      <p class="sub">Add as many ideas as you like — one idea per entry. Write each one so that someone else can understand it.</p>
+      <ol class="idea-list" id="ideaList"></ol>
+      <label for="newIdea" class="sr-only">New idea</label>
+      <textarea id="newIdea" rows="3" maxlength="1000" placeholder="Type an idea… (Enter to add, Shift+Enter for a new line)"></textarea>
+      <div class="input-row">
+        <span class="counter" id="counter" aria-live="polite"></span>
+        <button class="btn btn-primary btn-sm" id="addBtn" type="button">+ Add idea</button>
+      </div>
+    </section>
+
+    <div class="actions">
+      <span class="hint" id="lockHint"></span>
+      <button class="btn btn-dark" id="nextBtn" type="button" disabled>Lock ideas &amp; continue →</button>
+    </div>
+    <div class="error" id="err" role="alert"></div>`;
+
+  const ta = $('#newIdea');
+  ta.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); addIdea(); } });
+  ta.addEventListener('paste', e => { const t = (e.clipboardData || window.clipboardData)?.getData('text') || ''; S.draftPaste.count++; S.draftPaste.chars += t.length; });
+  $('#addBtn').onclick = addIdea;
+  $('#nextBtn').onclick = lockIdeas;
+  $('#ideaList').onclick = e => { const b = e.target.closest('[data-del]'); if (b) { S.ideas = S.ideas.filter(i => i.id !== b.dataset.del); renderIdeaList(); } };
+  renderIdeaList();
+  ta.focus();
+}
+
 function addIdea() {
-  const input = document.getElementById('newIdea');
-  const text = input.value.trim();
-  if (!text) { showToast('Please type an idea first'); return; }
-  if (ideas.length >= MAX_IDEAS) return;
-  ideas.push({id:crypto.randomUUID(), text, timestamp:Date.now()});
-  input.value = '';
-  renderIdeas();
-  input.focus();
-}
-function removeIdea(id) { ideas = ideas.filter(i=>i.id!==id); renderIdeas(); }
-function renderIdeas() {
-  document.getElementById('ideaList').innerHTML = ideas.map((idea,idx) => `
-    <div class="idea-item">
-      <div class="idea-number">${idx+1}</div>
-      <div class="idea-text">${escHtml(idea.text)}</div>
-      <div class="idea-actions"><button onclick="removeIdea('${idea.id}')" title="Remove">&#10005;</button></div>
-    </div>`).join('');
-  document.getElementById('ideaCounter').textContent = `${ideas.length} / ${MAX_IDEAS} ideas`;
-  document.getElementById('toRankBtn').disabled = ideas.length < 2;
-  document.getElementById('addIdeaBtn').disabled = ideas.length >= MAX_IDEAS;
-  document.getElementById('newIdea').disabled = ideas.length >= MAX_IDEAS;
+  const ta = $('#newIdea'), text = ta.value.trim();
+  if (!text) { toast('Type an idea first'); ta.focus(); return; }
+  if (S.ideas.some(i => i.text.toLowerCase() === text.toLowerCase())) { toast('You already added this idea'); return; }
+  S.ideas.push({ id: uuid(), text, position: ++S.created, created_at: new Date().toISOString(),
+                 paste_count: S.draftPaste.count, pasted_chars: S.draftPaste.chars });
+  S.draftPaste = { count: 0, chars: 0 };
+  ta.value = ''; renderIdeaList(); ta.focus();
 }
 
-// ── Phase 2: Self-Ranking ──────────────────────────────────
-function goToRanking() {
-  if (ideas.length < 2) return;
-  selfRanking = ideas.map(i=>i.id).sort(()=>Math.random()-.5);
-  renderRankList('rankList', selfRanking, ideas);
-  showStep(1);
+function renderIdeaList() {
+  const n = S.ideas.length;
+  $('#ideaList').innerHTML = S.ideas.map((idea, i) => `
+    <li class="idea-item">
+      <span class="idea-no" aria-hidden="true">${i + 1}</span>
+      <span class="idea-text">${esc(idea.text)}</span>
+      <button class="icon-btn" type="button" data-del="${idea.id}" aria-label="Remove idea ${i + 1}">✕</button>
+    </li>`).join('');
+  $('#counter').textContent = n === 1 ? '1 idea' : `${n} ideas`;
+  $('#nextBtn').disabled = n < MIN_IDEAS;
+  $('#lockHint').textContent = n < MIN_IDEAS ? `Add at least ${MIN_IDEAS} ideas to continue.` : "You can't change your ideas after this step.";
 }
 
-function badgeClass(idx) { return ['gold','silver','bronze','r4','r5'][idx] || 'r5'; }
-
-function renderRankList(containerId, orderArr, sourceArr) {
-  const container = document.getElementById(containerId);
-  container.innerHTML = orderArr.map((id,idx) => {
-    const idea = sourceArr.find(i=>i.id===id);
-    return `<div class="rank-item" draggable="true" data-id="${id}" data-container="${containerId}">
-      <div class="drag-handle">&#10303;</div>
-      <div class="rank-badge ${badgeClass(idx)}">#${idx+1}</div>
-      <div class="rank-text">${escHtml(idea.text)}</div>
-    </div>`;
-  }).join('');
-  container.querySelectorAll('.rank-item').forEach(item => {
-    item.addEventListener('dragstart', handleDragStart);
-    item.addEventListener('dragover', handleDragOver);
-    item.addEventListener('drop', handleDrop);
-    item.addEventListener('dragend', handleDragEnd);
-    item.addEventListener('dragleave', handleDragLeave);
-  });
+async function lockIdeas() {
+  const btn = $('#nextBtn');
+  if (S.ideas.length < MIN_IDEAS) return;
+  if ($('#newIdea').value.trim()) { toast('You still have text in the box — add it or clear it first'); $('#newIdea').focus(); return; }
+  clearError(); setBusy(btn, true);
+  try {
+    if (DEMO) S.condition = FORCED_C || 1 + Math.floor(Math.random() * 3);
+    else {
+      S.condition = await rpc('register_participant', { p_id: S.pid, p_session: S.session, p_user_agent: null });
+      await rpc('save_ideas', { p_participant: S.pid, p_ideas: S.ideas, p_generation_ms: elapsed() });
+    }
+    renderScreening();
+  } catch (e) { setBusy(btn, false); showError(SAVE_FAIL); }
 }
 
-let draggedId=null, dragContainer=null;
-function handleDragStart(e) { draggedId=e.currentTarget.dataset.id; dragContainer=e.currentTarget.dataset.container; e.currentTarget.classList.add('dragging'); }
-function handleDragOver(e) { e.preventDefault(); if(e.currentTarget.dataset.container===dragContainer) e.currentTarget.classList.add('drag-over'); }
-function handleDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
-function handleDragEnd() { document.querySelectorAll('.rank-item').forEach(i=>i.classList.remove('dragging','drag-over')); }
-function handleDrop(e) {
-  e.preventDefault();
-  const targetId=e.currentTarget.dataset.id, cid=e.currentTarget.dataset.container;
-  if(cid!==dragContainer||draggedId===targetId) return;
-  let arr = cid==='rankList' ? selfRanking : peerRanking;
-  let src = cid==='rankList' ? ideas : peerIdeas;
-  const fi=arr.indexOf(draggedId), ti=arr.indexOf(targetId);
-  arr.splice(fi,1); arr.splice(ti,0,draggedId);
-  if(cid==='rankList') selfRanking=arr; else peerRanking=arr;
-  renderRankList(cid, arr, src);
-}
+/* ================= PHASE 2: SCREENING (3 conditions) ================= */
+function renderScreening() {
+  setPhase(2);
+  S.screenOrder = shuffle(S.ideas.map(i => i.id));
+  const c = S.condition;
+  const intro = {
+    1: { h: 'Look through your ideas', p: 'Take a moment to read through all of your ideas.' },
+    2: { h: 'Rank your ideas', p: `Put your ideas in order from <strong>best (#1)</strong> to <strong>worst</strong>. ${CRITERION} Use the arrows or drag and drop.` },
+    3: { h: 'Rate your ideas', p: `Rate each idea from <strong>1 (weak)</strong> to <strong>5 (excellent)</strong>. ${CRITERION}` }
+  }[c];
 
-// ── Submit own ideas ───────────────────────────────────────
-async function submitOwnIdeas() {
-  const genTime = Date.now() - startTime;
+  let body = '';
+  if (c === 1) body = `<ul class="view-list">${S.screenOrder.map(id => `<li class="view-item">${esc(ideaText(id))}</li>`).join('')}</ul>`;
+  if (c === 2) body = `<ol class="rank-list" id="rankList"></ol>`;
+  if (c === 3) body = S.screenOrder.map((id, i) => `
+      <div class="rate-item" data-id="${id}">
+        <p class="rate-text" id="rt-${i}">${esc(ideaText(id))}</p>
+        <div class="rate-row">
+          <input type="range" min="1" max="5" step="1" value="3" class="untouched" data-id="${id}" aria-labelledby="rt-${i}" aria-valuetext="Not rated yet">
+          <span class="rate-val empty-val" id="rv-${id}">Not rated</span>
+        </div>
+        <div class="ticks" aria-hidden="true"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div>
+      </div>`).join('');
 
-  // Insert participant
-  const {error: pErr} = await sb.from('participants').insert({
-    id: participantId,
-    session_id: sessionId,
-    created_at: new Date().toISOString(),
-    generation_time_ms: genTime
-  });
-  if (pErr) console.error('participants insert error:', pErr);
+  app.innerHTML = `
+    <section class="card">
+      <span class="phase-tag">Phase 2 · Idea screening</span>
+      <h2>${intro.h}</h2>
+      <p class="sub">${intro.p}</p>
+      ${body}
+    </section>
+    <div class="actions">
+      <span class="hint" id="hint"></span>
+      <button class="btn btn-primary" id="nextBtn" type="button">Continue to selection →</button>
+    </div>
+    <div class="error" id="err" role="alert"></div>`;
 
-  // Insert ideas
-  const ideaRows = selfRanking.map((id,idx) => {
-    const idea = ideas.find(i=>i.id===id);
-    return {
-      id: idea.id,
-      participant_id: participantId,
-      text: idea.text,
-      self_rank: idx+1,
-      created_at: new Date(idea.timestamp).toISOString(),
-      review_count: 0
+  if (c === 2) { S.rankOrder = [...S.screenOrder]; rankList($('#rankList'), S.rankOrder, () => S.interactions++); }
+  if (c === 3) {
+    const labels = { 1: '1 · weak', 2: '2', 3: '3', 4: '4', 5: '5 · excellent' };
+    const mark = inp => {
+      const id = inp.dataset.id, v = +inp.value;
+      if (S.scores[id] !== v) S.interactions++;
+      S.scores[id] = v;
+      inp.classList.remove('untouched'); inp.setAttribute('aria-valuetext', labels[v]);
+      const out = $(`#rv-${id}`); out.textContent = labels[v]; out.classList.remove('empty-val');
+      inp.closest('.rate-item').classList.add('done');
+      updateRateState();
     };
-  });
-  const {error: iErr} = await sb.from('ideas').insert(ideaRows);
-  if (iErr) console.error('ideas insert error:', iErr);
-
-  // Load peer ideas
-  await loadPeerIdeas();
-  showStep(2);
-}
-
-async function loadPeerIdeas() {
-  // Try RPC first
-  const {data: rpcData} = await sb.rpc('get_ideas_for_review', {reviewer_id: participantId, n: PEER_COUNT});
-  if (rpcData && rpcData.length > 0) {
-    peerIdeas = rpcData.map(r=>({id:r.id, text:r.text, participant_id:r.participant_id}));
-    renderPeerIdeas();
-    return;
+    app.querySelectorAll('input[type=range]').forEach(inp => { inp.addEventListener('input', () => mark(inp)); inp.addEventListener('change', () => mark(inp)); inp.addEventListener('click', () => mark(inp)); });
+    updateRateState();
   }
-
-  // Fallback: direct query
-  const {data} = await sb.from('ideas')
-    .select('*')
-    .neq('participant_id', participantId)
-    .order('review_count', {ascending:true})
-    .limit(PEER_COUNT);
-
-  if (data && data.length > 0) {
-    peerIdeas = data.map(r=>({id:r.id, text:r.text, participant_id:r.participant_id}));
-  } else {
-    loadDemoPeerIdeas();
-  }
-  renderPeerIdeas();
+  $('#nextBtn').onclick = saveScreening;
 }
 
-function loadDemoPeerIdeas() {
-  const demo = [
-    "Record every lecture and make recordings available within 2 hours, with AI-generated chapter markers and searchable transcripts.",
-    "Replace the last 15 minutes of each lecture with a live Q&A where students submit questions anonymously via their phones.",
-    "Introduce mid-semester 'lecture audits' where a small student panel gives structured feedback to the professor, who then adjusts the remaining sessions.",
-    "Let students vote on the pace: at three points during a lecture, a quick poll asks 'too fast / just right / too slow' and the professor adapts in real time.",
-    "Pair each large lecture with a weekly 20-person workshop where students solve problems together, with the professor rotating between groups.",
-    "Provide a one-page 'lecture map' before each session showing the key concepts, how they connect, and what to read beforehand.",
-    "Have two professors co-teach a lecture, debating different perspectives on the topic to model critical thinking.",
-    "Create a 'lecture lab' room with round tables instead of rows, whiteboards on every wall, and no fixed podium — forcing interactive formats."
-  ];
-  const shuffled = demo.sort(()=>Math.random()-.5).slice(0, PEER_COUNT);
-  peerIdeas = shuffled.map(text=>({id:crypto.randomUUID(), text, participant_id:'demo'}));
+function updateRateState() {
+  const done = Object.keys(S.scores).length, n = S.ideas.length;
+  $('#nextBtn').disabled = done < n;
+  $('#hint').textContent = done < n ? `${done} of ${n} ideas rated` : 'All ideas rated';
 }
 
-// ── Phase 3: Peer Ranking ──────────────────────────────────
-function renderPeerIdeas() {
-  peerRanking = peerIdeas.map(i=>i.id).sort(()=>Math.random()-.5);
-  renderRankList('peerRankList', peerRanking, peerIdeas);
-}
-
-async function submitPeerEval() {
-  const reviews = peerRanking.map((id,idx)=>({
-    id: crypto.randomUUID(),
-    idea_id: id,
-    reviewer_id: participantId,
-    peer_rank: idx+1,
-    created_at: new Date().toISOString()
+async function saveScreening() {
+  const btn = $('#nextBtn'); clearError(); setBusy(btn, true);
+  const items = S.screenOrder.map((id, i) => ({
+    id, screen_order: i + 1,
+    self_rank: S.condition === 2 ? S.rankOrder.indexOf(id) + 1 : null,
+    self_score: S.condition === 3 ? S.scores[id] : null
   }));
-
-  const {error: rErr} = await sb.from('reviews').upsert(reviews, {onConflict:'idea_id,reviewer_id'});
-  if (rErr) console.error('reviews insert error:', rErr);
-
-  // Increment review counts
-  for (const id of peerRanking) {
-    await sb.rpc('increment_review_count', {idea_uuid: id});
-  }
-
-  document.getElementById('sessionInfo').textContent = `Session: ${sessionId.slice(0,8)}`;
-  showStep(3);
+  try {
+    await rpc('save_screening', { p_participant: S.pid, p_items: items, p_ms: elapsed(), p_interactions: S.interactions });
+    renderSelection();
+  } catch (e) { setBusy(btn, false); showError(SAVE_FAIL); }
 }
 
-// ── Utils ──────────────────────────────────────────────────
-function escHtml(s) { const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
-function showToast(msg) { const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
+/* ================= PHASE 3: SELECTION (identical for all conditions) ================= */
+function renderSelection() {
+  setPhase(3);
+  S.selectOrder = shuffle(S.ideas.map(i => i.id));
+  const poolNote = PEER_POOL === 'submitted' ? ' Only submitted ideas will be evaluated by other participants.' : '';
+  app.innerHTML = `
+    <section class="card">
+      <span class="phase-tag">Phase 3 · Idea selection</span>
+      <h2>Submit your best ideas</h2>
+      <p class="sub">Choose which of your ideas you want to submit to the tournament. Submit as many or as few as you like, but at least one.${poolNote}</p>
+      <div id="selList">${S.selectOrder.map(id => `
+        <label class="select-item"><input type="checkbox" value="${id}"><span>${esc(ideaText(id))}</span></label>`).join('')}
+      </div>
+      <label class="confirm"><input type="checkbox" id="noAi"><span><strong>I confirm that these ideas are my own</strong> and that I did not use AI tools or copy them from elsewhere.</span></label>
+      <p class="small-anon"><span aria-hidden="true">🔒</span><span>Your submission is anonymous and cannot be traced back to you.</span></p>
+    </section>
+    <div class="actions">
+      <span class="hint" id="hint"></span>
+      <button class="btn btn-primary" id="nextBtn" type="button" disabled>Submit to tournament →</button>
+    </div>
+    <div class="error" id="err" role="alert"></div>`;
 
-// ── Init ───────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
-  if (window.location.search.includes('host')) {
-    window.location.href = 'admin.html';
+  const update = () => {
+    const n = S.selected.size;
+    $('#hint').textContent = `${n} of ${S.ideas.length} ideas selected`;
+    $('#nextBtn').disabled = n < 1 || !S.noAi;
+  };
+  app.querySelectorAll('#selList input').forEach(cb => cb.addEventListener('change', () => {
+    cb.checked ? S.selected.add(cb.value) : S.selected.delete(cb.value);
+    cb.closest('.select-item').classList.toggle('on', cb.checked); update();
+  }));
+  $('#noAi').addEventListener('change', e => { S.noAi = e.target.checked; update(); });
+  $('#nextBtn').onclick = saveSelection;
+  update();
+}
+
+async function saveSelection() {
+  const btn = $('#nextBtn'); clearError(); setBusy(btn, true, 'Submitting…');
+  try {
+    await rpc('save_selection', { p_participant: S.pid, p_ids: [...S.selected], p_no_ai: S.noAi, p_ms: elapsed() });
+    startEvaluation();
+  } catch (e) { setBusy(btn, false); showError(SAVE_FAIL); }
+}
+
+/* ================= PHASE 4: EVALUATION ================= */
+const DEMO_PEERS = [
+  'Open the library 24/7 during exam weeks, with a quiet zone and a group zone.',
+  'Put live occupancy displays for study rooms and the canteen on a campus app.',
+  'Install more power outlets and charging lockers in lecture halls and the library.',
+  'Create a covered outdoor learning area with Wi-Fi, tables and plants.',
+  'Offer a cheap "rescue meal" in the canteen at closing time to cut food waste.',
+  'Run a monthly open lab night where students from different programmes build things together.'
+];
+
+function startEvaluation() {
+  setPhase(4);
+  const t0 = Date.now();
+  app.innerHTML = `
+    <section class="card waiting" aria-live="polite">
+      <span class="phase-tag">Phase 4 · Idea evaluation</span>
+      <div class="pulse" aria-hidden="true"></div>
+      <h2>Collecting ideas from other participants…</h2>
+      <p id="waitMsg">This usually takes less than a minute. Please keep this page open.</p>
+      <p id="skipWrap" style="margin-top:16px;display:none"><button class="btn-link" id="skipBtn" type="button">Finish without evaluating</button></p>
+    </section>
+    <div class="error" id="err" role="alert"></div>`;
+  $('#skipBtn').onclick = () => finish(true);
+
+  if (DEMO) {
+    setTimeout(() => { S.peerIdeas = shuffle(DEMO_PEERS).slice(0, PEER_COUNT).map(text => ({ id: uuid(), text })); renderEvaluation(); }, 1200);
     return;
   }
-  document.getElementById('newIdea').addEventListener('keydown', e => {
-    if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); addIdea(); }
-  });
-  renderDots();
-  console.log('[Idea Friction] Ready. Supabase client initialized.');
-});
+  const tick = async () => {
+    if (S.phase !== 4 || S.peerIdeas.length || S.finished) return;
+    const waited = Date.now() - t0;
+    try {
+      const n = await rpc('count_review_pool', { p_reviewer: S.pid, p_pool: PEER_POOL });
+      if (n >= PEER_COUNT || (waited > WAIT_FALLBACK_MS && n >= MIN_PEER)) {
+        const rows = await rpc('get_ideas_for_review', { p_reviewer: S.pid, p_n: PEER_COUNT, p_pool: PEER_POOL });
+        if (rows && rows.length >= MIN_PEER) {
+          S.peerIdeas = rows.map(r => ({ id: r.idea_id, text: r.idea_text }));
+          renderEvaluation(); return;
+        }
+      }
+    } catch (e) { console.warn('poll failed', e); }
+    if (waited > SKIP_AFTER_MS) { $('#skipWrap').style.display = 'block'; $('#waitMsg').textContent = 'Not enough ideas have been submitted yet. You can keep waiting, or finish now.'; }
+    setTimeout(tick, POLL_MS);
+  };
+  tick();
+}
+
+function renderEvaluation() {
+  S.phaseStart = Date.now();
+  S.peerOrder = shuffle(S.peerIdeas.map(i => i.id));
+  const src = PEER_POOL === 'submitted' ? 'These ideas were submitted by other participants.' : 'These ideas come from other participants and are shown anonymously.';
+  app.innerHTML = `
+    <section class="card">
+      <span class="phase-tag">Phase 4 · Idea evaluation</span>
+      <h2>Rank these ideas 🔍</h2>
+      <p class="sub">${src} Put them in order from <strong>best (#1)</strong> to <strong>worst</strong>. ${CRITERION} Use the arrows or drag and drop.</p>
+      <ol class="rank-list" id="peerList"></ol>
+    </section>
+    <div class="actions"><button class="btn btn-primary" id="nextBtn" type="button">Submit ranking →</button></div>
+    <div class="error" id="err" role="alert"></div>`;
+  rankList($('#peerList'), S.peerOrder);
+  $('#nextBtn').onclick = () => finish(false);
+}
+
+async function finish(skipped) {
+  const btn = $('#nextBtn'); clearError(); setBusy(btn, true);
+  const n = S.peerOrder.length;
+  const items = skipped ? [] : S.peerOrder.map((id, i) => ({ idea_id: id, peer_rank: i + 1, set_size: n }));
+  try {
+    await rpc('save_reviews', { p_reviewer: S.pid, p_items: items, p_ms: elapsed(), p_skipped: !!skipped });
+    S.finished = true; renderDone();
+  } catch (e) { setBusy(btn, false); showError(SAVE_FAIL); }
+}
+
+function renderDone() {
+  S.phase = 5;
+  $('#track').innerHTML = PHASES.map((p, i) => `<li class="done"><div class="num">PHASE ${i + 1}</div><div class="lbl">${p}</div></li>`).join('');
+  app.innerHTML = `
+    <section class="card done-card">
+      <div class="big" aria-hidden="true">🏆</div>
+      <h2>Thank you!</h2>
+      <p>Your ideas and rankings are in the tournament. Everything was recorded anonymously. You can close this page now.</p>
+      <p class="meta">${DEMO ? 'Demo mode · nothing was saved' : 'Anonymous participation · ODCE, TU Hamburg'}</p>
+    </section>`;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ================= INIT ================= */
+if (DEMO) { const f = document.createElement('div'); f.className = 'demo-flag'; f.textContent = `DEMO${FORCED_C ? ' · condition ' + FORCED_C : ''} · not saved`; document.body.appendChild(f); }
+if (!params.has('host')) renderCreation();
 </script>
 </body>
 </html>

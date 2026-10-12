@@ -3,371 +3,375 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Idea Friction — Host Dashboard</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.8/dist/umd/supabase.min.js"></script>
+<title>Campus Idea Tournament · Host · ODCE TU Hamburg</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Source+Serif+4:opsz,wght@8..60,700&display=swap" rel="stylesheet"/>
 <style>
-  :root {
-    --bg:#f0f2f5;--card:#fff;--primary:#2563eb;--primary-hover:#1d4ed8;
-    --accent:#10b981;--danger:#ef4444;--text:#1e293b;--muted:#64748b;--border:#e2e8f0;--radius:12px;--sidebar:240px;
-  }
-  *{margin:0;padding:0;box-sizing:border-box;}
-  body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;}
-  .sidebar{width:var(--sidebar);background:#1e293b;color:#fff;display:flex;flex-direction:column;flex-shrink:0;position:fixed;top:0;left:0;height:100vh;z-index:50;}
-  .sidebar-logo{padding:24px 20px 16px;border-bottom:1px solid rgba(255,255,255,.1);}
-  .sidebar-logo h1{font-size:18px;font-weight:700;}
-  .sidebar-logo h1 span{color:#60a5fa;}
-  .sidebar-logo p{font-size:11px;color:#94a3b8;margin-top:2px;}
-  .sidebar-nav{flex:1;padding:16px 0;}
-  .nav-item{display:flex;align-items:center;gap:10px;padding:10px 20px;font-size:13px;font-weight:500;color:#94a3b8;cursor:pointer;border-left:3px solid transparent;transition:all .15s;}
-  .nav-item:hover{color:#fff;background:rgba(255,255,255,.05);}
-  .nav-item.active{color:#fff;background:rgba(96,165,250,.1);border-left-color:#60a5fa;}
-  .nav-item .icon{font-size:16px;width:20px;text-align:center;}
-  .sidebar-footer{padding:16px 20px;border-top:1px solid rgba(255,255,255,.1);}
-  .conn-status{display:flex;align-items:center;gap:8px;font-size:12px;color:#94a3b8;}
-  .conn-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
-  .conn-dot.ok{background:#10b981;}
-  .conn-dot.err{background:#ef4444;}
-  .main{margin-left:var(--sidebar);flex:1;display:flex;flex-direction:column;}
-  .topbar{background:#fff;border-bottom:1px solid var(--border);padding:0 32px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:40;}
-  .topbar h2{font-size:16px;font-weight:600;}
-  .topbar-actions{display:flex;gap:8px;}
-  .content{padding:28px 32px;flex:1;}
-  .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:0 1px 3px rgba(0,0,0,.04);}
-  .card-title{font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
-  .card-value{font-size:32px;font-weight:700;}
-  .card-sub{font-size:12px;color:var(--muted);margin-top:4px;}
-  .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
-  .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border:none;border-radius:8px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;}
-  .btn-primary{background:var(--primary);color:#fff;}
-  .btn-outline{background:transparent;color:var(--primary);border:1px solid var(--primary);}
-  .btn-danger{background:transparent;color:var(--danger);border:1px solid var(--danger);}
-  .btn-sm{padding:6px 12px;font-size:12px;}
-  .table-wrap{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--border);}
-  table{width:100%;border-collapse:collapse;font-size:13px;}
-  thead{background:#f8fafc;}
-  th{padding:10px 16px;text-align:left;font-weight:600;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--border);}
-  td{padding:12px 16px;border-bottom:1px solid var(--border);vertical-align:top;}
-  tr:last-child td{border-bottom:none;}
-  tr:hover td{background:#f8fafc;}
-  .badge{display:inline-flex;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;}
-  .badge-green{background:#dcfce7;color:#166534;}
-  .badge-amber{background:#fef3c7;color:#92400e;}
-  .badge-red{background:#fee2e2;color:#991b1b;}
-  .rank-pill{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:6px;font-size:11px;font-weight:700;}
-  .rank-1{background:#fef3c7;color:#92400e;}
-  .rank-2{background:#e2e8f0;color:#475569;}
-  .rank-3{background:#fed7aa;color:#9a3412;}
-  .rank-n{background:#f1f5f9;color:#64748b;}
-  .mini-bar{height:6px;background:#e2e8f0;border-radius:99px;overflow:hidden;margin-top:6px;}
-  .mini-bar-fill{height:100%;background:var(--accent);border-radius:99px;transition:width .4s;}
-  .empty{text-align:center;padding:48px 24px;color:var(--muted);}
-  .empty .empty-icon{font-size:40px;margin-bottom:12px;}
-  .hidden{display:none!important;}
-  .toast{position:fixed;bottom:24px;right:24px;background:#1e293b;color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;z-index:200;opacity:0;transition:opacity .3s;pointer-events:none;}
-  .toast.show{opacity:1;}
-  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;display:flex;align-items:center;justify-content:center;}
-  .modal{background:#fff;border-radius:var(--radius);padding:28px;width:480px;max-width:90vw;}
-  .modal h3{font-size:18px;font-weight:700;margin-bottom:8px;}
-  .modal p{font-size:14px;color:var(--muted);margin-bottom:20px;}
-  .modal-actions{display:flex;gap:8px;justify-content:flex-end;}
-  .calib-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;}
-  .corr-value{font-size:48px;font-weight:700;color:var(--primary);}
-  .corr-label{font-size:13px;color:var(--muted);margin-top:4px;}
-  .alert{padding:12px 16px;border-radius:8px;font-size:13px;margin-bottom:16px;line-height:1.5;}
-  .alert-info{background:#dbeafe;border:1px solid #bfdbfe;color:#1e40af;}
-  .idea-cell{max-width:320px;line-height:1.4;}
-  @media(max-width:900px){.stat-grid{grid-template-columns:repeat(2,1fr);}.calib-grid{grid-template-columns:1fr;}}
+  :root { --bg:#F4F6F8; --card:#fff; --primary:#00707C; --primary-soft:#E6F9FB; --tuerkis:#00C1D4; --navy:#0E1A33; --accent:#00C1D4; --danger:#C81E1E;
+          --text:#0E1A33; --muted:#566275; --border:#DCE2E8; --radius:4px;
+          --c1:#566275; --c2:#00707C; --c3:#7200FE; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'DM Sans',system-ui,sans-serif; background:var(--bg); color:var(--text); font-size:14px; line-height:1.5; }
+  header { background:var(--navy); border-top:6px solid var(--tuerkis); color:#fff; padding:0 28px; height:56px; display:flex; align-items:center; gap:20px; position:sticky; top:0; z-index:20; }
+  header h1 { font-size:16px; font-weight:700; }
+  header h1 span { color:var(--tuerkis); }
+  nav { display:flex; gap:4px; flex:1; }
+  nav button { background:none; border:none; color:#94a3b8; font:inherit; font-weight:500; padding:8px 12px; border-radius:6px; cursor:pointer; }
+  nav button:hover { color:#fff; background:rgba(255,255,255,.06); }
+  nav button[aria-selected=true] { color:var(--navy); background:var(--tuerkis); }
+  .hdr-right { display:flex; align-items:center; gap:12px; font-size:12px; color:#94a3b8; }
+  .hdr-right label { display:flex; gap:6px; align-items:center; cursor:pointer; }
+  main { padding:24px 28px 60px; max-width:1280px; margin:0 auto; }
+  .card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:20px; margin-bottom:20px; }
+  .card h2 { font-size:15px; font-weight:700; margin-bottom:4px; }
+  .card .sub { color:var(--muted); font-size:13px; margin-bottom:14px; }
+  .stats { display:grid; grid-template-columns:repeat(5,1fr); gap:14px; margin-bottom:20px; }
+  .stat .k { font-size:11px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; }
+  .stat .v { font-size:28px; font-weight:700; }
+  .stat .s { font-size:12px; color:var(--muted); }
+  .btn { display:inline-flex; align-items:center; gap:6px; padding:8px 14px; border-radius:8px; font:inherit; font-size:13px; font-weight:600; cursor:pointer; border:1px solid var(--primary); background:#fff; color:var(--primary); }
+  .btn:hover { background:var(--primary-soft); }
+  .btn-primary { background:var(--tuerkis); color:var(--navy); border-color:var(--tuerkis); }
+  .btn-primary:hover { background:#00ABBD; }
+  .btn-danger { border-color:var(--danger); color:var(--danger); }
+  .btn-danger:hover { background:#fef2f2; }
+  .btn:disabled { opacity:.4; cursor:not-allowed; }
+  .btn:focus-visible, nav button:focus-visible { outline:3px solid rgba(37,99,235,.4); outline-offset:2px; }
+  .table-wrap { overflow-x:auto; border:1px solid var(--border); border-radius:8px; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th { background:#f8fafc; text-align:left; padding:9px 12px; font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); border-bottom:1px solid var(--border); white-space:nowrap; }
+  td { padding:9px 12px; border-bottom:1px solid var(--border); vertical-align:top; }
+  tr:last-child td { border-bottom:none; }
+  td.num, th.num { text-align:right; font-variant-numeric:tabular-nums; }
+  td.txt { max-width:420px; }
+  .mono { font-family:ui-monospace,monospace; font-size:11px; color:var(--muted); }
+  .pill { display:inline-block; padding:1px 8px; border-radius:2px; font-size:11px; font-weight:700; }
+  .pill.c1 { background:#f1f5f9; color:var(--c1); } .pill.c2 { background:#E6F9FB; color:var(--c2); } .pill.c3 { background:#F4ECFF; color:#5300BA; }
+  .pill.yes { background:#dcfce7; color:#166534; } .pill.no { background:#f1f5f9; color:#94a3b8; } .pill.warn { background:#fee2e2; color:#991b1b; }
+  .filters { display:flex; gap:10px; margin-bottom:12px; flex-wrap:wrap; align-items:center; }
+  select, input[type=text], input[type=password] { font:inherit; font-size:13px; padding:8px 10px; border:1px solid var(--border); border-radius:8px; background:#fff; }
+  input:focus, select:focus { outline:none; border-color:var(--primary); box-shadow:0 0 0 3px rgba(37,99,235,.12); }
+  .bar { height:6px; background:#e2e8f0; border-radius:99px; overflow:hidden; margin-top:6px; }
+  .bar > div { height:100%; background:var(--accent); }
+  .note { background:#E6F9FB; border:1px solid #9FE7EF; border-left:4px solid var(--tuerkis); color:var(--navy); border-radius:8px; padding:12px 14px; font-size:13px; margin-bottom:16px; }
+  .note.warn { background:#fff7ed; border-color:#fdba74; color:#9a3412; }
+  .empty { text-align:center; color:var(--muted); padding:28px; }
+  .login { max-width:380px; margin:12vh auto; }
+  .login .card { padding:28px; border-top:6px solid var(--tuerkis); }
+  .login h2 { font-size:18px; margin-bottom:6px; }
+  .login input { width:100%; margin:12px 0; padding:11px 12px; }
+  .err { color:var(--danger); font-size:13px; min-height:20px; }
+  .hidden { display:none !important; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  .toast { position:fixed; bottom:20px; right:20px; background:#1e293b; color:#fff; padding:10px 18px; border-radius:8px; font-size:13px; opacity:0; transition:opacity .3s; pointer-events:none; z-index:50; }
+  .toast.show { opacity:1; }
+  .top-item { display:flex; gap:12px; align-items:flex-start; padding:10px 0; border-bottom:1px solid var(--border); }
+  .top-item:last-child { border-bottom:none; }
+  .top-item .r { min-width:28px; height:28px; border-radius:2px; background:var(--tuerkis); color:var(--navy); font-weight:700; font-size:12px; display:flex; align-items:center; justify-content:center; }
+  .top-item .t { flex:1; }
+  .top-item .m { text-align:right; font-size:12px; color:var(--muted); white-space:nowrap; }
+  @media (max-width:1000px) { .stats { grid-template-columns:repeat(2,1fr); } .grid2 { grid-template-columns:1fr; } nav { overflow-x:auto; } }
 </style>
 </head>
 <body>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<aside class="sidebar">
-  <div class="sidebar-logo"><h1><span>Idea</span> Friction</h1><p>Host Dashboard</p></div>
-  <nav class="sidebar-nav">
-    <div class="nav-item active" onclick="showPage('overview')" id="nav-overview"><span class="icon">📊</span> Overview</div>
-    <div class="nav-item" onclick="showPage('ideas')" id="nav-ideas"><span class="icon">💡</span> Ideas</div>
-    <div class="nav-item" onclick="showPage('reviews')" id="nav-reviews"><span class="icon">🔍</span> Peer Rankings</div>
-    <div class="nav-item" onclick="showPage('calibration')" id="nav-calibration"><span class="icon">🎯</span> Calibration</div>
-  </nav>
-  <div class="sidebar-footer">
-    <div class="conn-status"><div class="conn-dot" id="connDot"></div><span id="connLabel">Connecting…</span></div>
+<!-- LOGIN -->
+<div class="login" id="login">
+  <div class="card">
+    <h2 style="font-family:'Source Serif 4',Georgia,serif">Campus Idea Tournament · Host</h2>
+    <p class="sub" style="color:var(--muted);font-size:13px">Enter the admin password you set in the Supabase setup.</p>
+    <form id="loginForm">
+      <label for="pw" class="sub" style="font-size:12px;color:var(--muted)">Admin password</label>
+      <input type="password" id="pw" autocomplete="current-password" required>
+      <button class="btn btn-primary" type="submit" style="width:100%;justify-content:center">Open dashboard</button>
+      <p class="err" id="loginErr" role="alert"></p>
+    </form>
   </div>
-</aside>
+</div>
 
-<div class="main">
-  <div class="topbar">
-    <h2 id="pageTitle">Overview</h2>
-    <div class="topbar-actions">
-      <button class="btn btn-outline btn-sm" onclick="refreshAll()">↻ Refresh</button>
-      <button class="btn btn-outline btn-sm" onclick="exportCSV()">⬇ Export CSV</button>
-      <button class="btn btn-danger btn-sm" onclick="openResetModal()">🗑 Reset</button>
+<!-- DASHBOARD -->
+<div id="dash" class="hidden">
+  <header>
+    <h1><span>ODCE</span> · Campus Idea Tournament</h1>
+    <nav role="tablist">
+      <button role="tab" data-tab="overview" aria-selected="true">Overview</button>
+      <button role="tab" data-tab="conditions">Conditions</button>
+      <button role="tab" data-tab="ideas">Ideas</button>
+      <button role="tab" data-tab="participants">Participants</button>
+      <button role="tab" data-tab="data">Export &amp; reset</button>
+    </nav>
+    <div class="hdr-right">
+      <span id="updated">—</span>
+      <label><input type="checkbox" id="auto" checked> Auto-refresh</label>
+      <button class="btn" id="refresh" style="background:transparent;color:#fff;border-color:#475569">↻ Refresh</button>
     </div>
-  </div>
-  <div class="content">
+  </header>
 
+  <main>
     <!-- OVERVIEW -->
-    <div id="page-overview" class="page">
-      <div class="stat-grid">
-        <div class="card"><div class="card-title">Participants</div><div class="card-value" id="stat-participants">—</div></div>
-        <div class="card"><div class="card-title">Ideas</div><div class="card-value" id="stat-ideas">—</div></div>
-        <div class="card"><div class="card-title">Peer rankings</div><div class="card-value" id="stat-reviews">—</div></div>
-        <div class="card"><div class="card-title">Coverage ≥3</div><div class="card-value" id="stat-coverage">—</div><div class="mini-bar"><div class="mini-bar-fill" id="stat-coverage-bar" style="width:0%"></div></div></div>
+    <section data-page="overview">
+      <div class="stats" id="stats"></div>
+      <div class="grid2">
+        <div class="card">
+          <h2>Top submitted ideas</h2>
+          <p class="sub">By mean peer score (0 = always ranked last, 1 = always ranked first), at least 2 peer rankings.</p>
+          <div id="topIdeas"></div>
+        </div>
+        <div class="card">
+          <h2>Live progress</h2>
+          <p class="sub">Participants per condition and how far they got.</p>
+          <div class="table-wrap"><table id="progressTbl"></table></div>
+        </div>
       </div>
-      <div class="card" style="margin-bottom:24px;">
-        <div class="card-title" style="margin-bottom:12px;">Top-ranked ideas (by avg peer rank)</div>
-        <div id="top-ideas-list"><div class="empty"><div class="empty-icon">💡</div><p>No data yet</p></div></div>
+    </section>
+
+    <!-- CONDITIONS -->
+    <section data-page="conditions" class="hidden">
+      <div class="note" id="poolNote"></div>
+      <div class="card">
+        <h2>Comparison by screening condition</h2>
+        <p class="sub">Completed participants only. Descriptive. Export the CSVs for proper statistical tests.</p>
+        <div class="table-wrap"><table id="condTbl"></table></div>
       </div>
-    </div>
+      <div class="card">
+        <h2>How to read this</h2>
+        <p class="sub" style="margin:0">
+          <strong>Selection gap</strong> = mean peer score of a person's submitted ideas minus that of their non-submitted ideas. Positive means people submitted their better ideas. It needs peer evaluations of non-submitted ideas (PEER_POOL = 'all' or external rating).<br>
+          <strong>Self–peer ρ</strong> = within-person Spearman correlation between self-assessment (rank in condition 2, slider in condition 3) and peer score, averaged over participants with ≥3 peer-evaluated ideas.<br>
+          <strong>Peer score</strong> = (set size − rank) / (set size − 1), so rankings from sets of different size are comparable.
+        </p>
+      </div>
+    </section>
 
     <!-- IDEAS -->
-    <div id="page-ideas" class="page hidden">
+    <section data-page="ideas" class="hidden">
       <div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-          <div class="card-title">All ideas</div>
-          <button class="btn btn-outline btn-sm" onclick="exportTableCSV('ideas-table','ideas')">⬇ CSV</button>
+        <div class="filters">
+          <select id="fCond" aria-label="Filter by condition"><option value="">All conditions</option><option value="1">1 · Look</option><option value="2">2 · Rank</option><option value="3">3 · Slider</option></select>
+          <select id="fSub" aria-label="Filter by submission"><option value="">Submitted + not</option><option value="1">Submitted only</option><option value="0">Not submitted</option></select>
+          <input type="text" id="fText" placeholder="Search text…" aria-label="Search ideas">
+          <span class="sub" id="ideaCount" style="margin:0 0 0 auto"></span>
         </div>
-        <div class="table-wrap"><table id="ideas-table">
-          <thead><tr><th>#</th><th>Idea</th><th>Self rank</th><th>Avg peer rank</th><th>Reviews</th><th>Participant</th></tr></thead>
-          <tbody id="ideas-tbody"><tr><td colspan="6"><div class="empty"><p>No data yet</p></div></td></tr></tbody>
-        </table></div>
+        <div class="table-wrap"><table id="ideasTbl"></table></div>
       </div>
-    </div>
+    </section>
 
-    <!-- REVIEWS -->
-    <div id="page-reviews" class="page hidden">
+    <!-- PARTICIPANTS -->
+    <section data-page="participants" class="hidden">
       <div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-          <div class="card-title">All peer rankings</div>
-          <button class="btn btn-outline btn-sm" onclick="exportTableCSV('reviews-table','reviews')">⬇ CSV</button>
-        </div>
-        <div class="table-wrap"><table id="reviews-table">
-          <thead><tr><th>Idea</th><th>Peer rank</th><th>Reviewer</th><th>Time</th></tr></thead>
-          <tbody id="reviews-tbody"><tr><td colspan="4"><div class="empty"><p>No data yet</p></div></td></tr></tbody>
-        </table></div>
+        <div class="table-wrap"><table id="partTbl"></table></div>
       </div>
-    </div>
+    </section>
 
-    <!-- CALIBRATION -->
-    <div id="page-calibration" class="page hidden">
-      <div class="alert alert-info">
-        <strong>Calibration</strong> measures whether participants can accurately judge the quality of their own ideas.
-        A strong positive correlation means self-rank #1 ideas also get the best (lowest) avg peer rank.
-      </div>
-      <div class="calib-grid">
-        <div class="card"><div class="card-title">Overall calibration</div><div class="corr-value" id="calib-corr">—</div><div class="corr-label">Spearman ρ (self-rank vs avg peer-rank)</div></div>
-        <div class="card"><div class="card-title">Interpretation</div><div id="calib-interp" style="font-size:14px;line-height:1.6;color:var(--muted);margin-top:8px;">Load data to see results.</div></div>
+    <!-- DATA -->
+    <section data-page="data" class="hidden">
+      <div class="card">
+        <h2>Export CSV</h2>
+        <p class="sub">Long-format files for R / Stata / SPSS. Join on <span class="mono">participant_id</span> and <span class="mono">idea_id</span>.</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-primary" data-export="ideas">⬇ ideas.csv (with peer stats)</button>
+          <button class="btn" data-export="participants">⬇ participants.csv</button>
+          <button class="btn" data-export="reviews">⬇ reviews.csv</button>
+        </div>
       </div>
       <div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-          <div class="card-title">Per-participant</div>
-          <button class="btn btn-outline btn-sm" onclick="exportTableCSV('calib-table','calibration')">⬇ CSV</button>
+        <h2 style="color:var(--danger)">Reset all data</h2>
+        <p class="sub">Permanently deletes all participants, ideas and rankings. Export first. Type <strong>RESET</strong> to confirm.</p>
+        <div style="display:flex;gap:10px">
+          <input type="text" id="resetConfirm" placeholder="RESET" aria-label="Type RESET to confirm">
+          <button class="btn btn-danger" id="resetBtn" disabled>Delete everything</button>
         </div>
-        <div class="table-wrap"><table id="calib-table">
-          <thead><tr><th>Participant</th><th>Ideas</th><th>Self #1 idea</th><th>Avg peer rank of #1</th><th>Signal</th></tr></thead>
-          <tbody id="calib-tbody"><tr><td colspan="5"><div class="empty"><p>No data yet</p></div></td></tr></tbody>
-        </table></div>
       </div>
-    </div>
-
-  </div>
+    </section>
+  </main>
 </div>
-
-<!-- Reset Modal -->
-<div class="modal-overlay hidden" id="resetModal">
-  <div class="modal">
-    <h3>Reset all data?</h3>
-    <p>This permanently deletes all participants, ideas, and peer rankings. Cannot be undone.</p>
-    <div class="modal-actions">
-      <button class="btn btn-outline" onclick="closeResetModal()">Cancel</button>
-      <button class="btn btn-danger" onclick="confirmReset()">Delete everything</button>
-    </div>
-  </div>
-</div>
-<div class="toast" id="toast"></div>
 
 <script>
-// ── Supabase ───────────────────────────────────────────────
 const SB_URL = 'https://uyynxszpmtwfxmnwirjn.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5eW54c3pwbXR3ZnhtbndpcmpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NjE3NDcsImV4cCI6MjA5MTIzNzc0N30.WJexHxaof97Z_hNI9Dv6L4Cq7hlM366dGhu89McUNgE';
-const sb = supabase.createClient(SB_URL, SB_KEY);
+const PEER_POOL = 'all'; // keep in sync with index.html
+const COND = { 1: 'Look', 2: 'Rank', 3: 'Slider' };
 
-let allParticipants=[], allIdeas=[], allReviews=[];
+let PW = null, D = { participants: [], ideas: [], reviews: [] }, A = null, autoTimer = null;
 
-// ── Data ───────────────────────────────────────────────────
-async function refreshAll() {
-  showToast('Loading…');
-  const [p, i, r] = await Promise.all([
-    sb.from('participants').select('*').order('created_at',{ascending:false}),
-    sb.from('ideas').select('*').order('created_at',{ascending:false}),
-    sb.from('reviews').select('*').order('created_at',{ascending:false})
-  ]);
+const $ = s => document.querySelector(s);
+const esc = s => { const d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; };
+const mean = a => a.length ? a.reduce((s, x) => s + x, 0) / a.length : null;
+const f = (x, d = 2) => x == null || isNaN(x) ? '—' : (+x).toFixed(d);
+const pct = x => x == null ? '—' : Math.round(x * 100) + '%';
+const sec = ms => ms == null ? '—' : (ms / 1000 / 60).toFixed(1) + ' min';
+function toast(m) { const t = $('#toast'); t.textContent = m; t.classList.add('show'); clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 2400); }
 
-  if (p.error) console.error('participants:', p.error);
-  if (i.error) console.error('ideas:', i.error);
-  if (r.error) console.error('reviews:', r.error);
-
-  allParticipants = p.data || [];
-  allIdeas = i.data || [];
-  allReviews = r.data || [];
-
-  document.getElementById('connDot').className = 'conn-dot ok';
-  document.getElementById('connLabel').textContent = 'Connected';
-
-  renderAll();
-  showToast(`${allParticipants.length} participants, ${allIdeas.length} ideas, ${allReviews.length} reviews`);
+async function rpc(fn, args) {
+  const res = await fetch(`${SB_URL}/rest/v1/rpc/${fn}`, { method: 'POST',
+    headers: { 'Content-Type': 'application/json', apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` }, body: JSON.stringify(args) });
+  const text = await res.text(); let data = null; try { data = text ? JSON.parse(text) : null; } catch (_) {}
+  if (!res.ok) throw new Error((data && data.message) || `HTTP ${res.status}`);
+  return data;
 }
 
-function renderAll() { renderOverview(); renderIdeasTable(); renderReviewsTable(); renderCalibration(); }
+/* ---------- stats ---------- */
+function avgRanks(a) { const idx = a.map((v, i) => [v, i]).sort((x, y) => x[0] - y[0]); const r = new Array(a.length); let i = 0;
+  while (i < idx.length) { let j = i; while (j + 1 < idx.length && idx[j + 1][0] === idx[i][0]) j++; const avg = (i + j) / 2 + 1; for (let k = i; k <= j; k++) r[idx[k][1]] = avg; i = j + 1; } return r; }
+function pearson(x, y) { const n = x.length; if (n < 3) return null; const mx = mean(x), my = mean(y); let sxy = 0, sxx = 0, syy = 0;
+  for (let i = 0; i < n; i++) { sxy += (x[i] - mx) * (y[i] - my); sxx += (x[i] - mx) ** 2; syy += (y[i] - my) ** 2; }
+  return sxx && syy ? sxy / Math.sqrt(sxx * syy) : null; }
+const spearman = (x, y) => x.length < 3 ? null : pearson(avgRanks(x), avgRanks(y));
 
-// ── Overview ───────────────────────────────────────────────
-function renderOverview() {
-  document.getElementById('stat-participants').textContent = allParticipants.length;
-  document.getElementById('stat-ideas').textContent = allIdeas.length;
-  document.getElementById('stat-reviews').textContent = allReviews.length;
-  const covered = allIdeas.filter(i=>(i.review_count||0)>=3).length;
-  const pct = allIdeas.length ? Math.round(covered/allIdeas.length*100) : 0;
-  document.getElementById('stat-coverage').textContent = pct+'%';
-  document.getElementById('stat-coverage-bar').style.width = pct+'%';
-
-  const stats = computeIdeaStats().filter(i=>i.nReviews>0).sort((a,b)=>a.avgPeerRank-b.avgPeerRank).slice(0,5);
-  const el = document.getElementById('top-ideas-list');
-  if (!stats.length) { el.innerHTML='<div class="empty"><div class="empty-icon">💡</div><p>No peer rankings yet</p></div>'; return; }
-  el.innerHTML = stats.map((idea,idx)=>`
-    <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);">
-      <div class="rank-pill rank-${idx<3?idx+1:'n'}">#${idx+1}</div>
-      <div style="flex:1;font-size:14px;">${escHtml(idea.text)}</div>
-      <div style="text-align:right;flex-shrink:0;"><div style="font-size:13px;font-weight:600;">avg ${idea.avgPeerRank.toFixed(1)}</div><div style="font-size:11px;color:var(--muted);">${idea.nReviews} reviews</div></div>
-    </div>`).join('');
-}
-
-// ── Ideas table ────────────────────────────────────────────
-function renderIdeasTable() {
-  const stats = computeIdeaStats();
-  const tbody = document.getElementById('ideas-tbody');
-  if (!stats.length) { tbody.innerHTML='<tr><td colspan="6"><div class="empty"><p>No ideas yet</p></div></td></tr>'; return; }
-  tbody.innerHTML = stats.map((idea,idx)=>`<tr>
-    <td style="color:var(--muted)">${idx+1}</td>
-    <td class="idea-cell">${escHtml(idea.text)}</td>
-    <td><div class="rank-pill rank-${idea.selfRank<=3?idea.selfRank:'n'}">#${idea.selfRank}</div></td>
-    <td>${idea.nReviews>0?'<strong>'+idea.avgPeerRank.toFixed(1)+'</strong>':'—'}</td>
-    <td><span class="badge ${idea.nReviews>=3?'badge-green':idea.nReviews>0?'badge-amber':'badge-red'}">${idea.nReviews}</span></td>
-    <td style="font-size:11px;font-family:monospace;color:var(--muted)">${idea.participantId.slice(0,8)}</td>
-  </tr>`).join('');
-}
-
-// ── Reviews table ──────────────────────────────────────────
-function renderReviewsTable() {
-  const tbody = document.getElementById('reviews-tbody');
-  if (!allReviews.length) { tbody.innerHTML='<tr><td colspan="4"><div class="empty"><p>No reviews yet</p></div></td></tr>'; return; }
-  tbody.innerHTML = allReviews.map(r=>{
-    const idea = allIdeas.find(i=>i.id===r.idea_id);
-    const text = idea ? idea.text.slice(0,60)+(idea.text.length>60?'…':'') : r.idea_id.slice(0,8);
-    const d = new Date(r.created_at);
-    return `<tr>
-      <td class="idea-cell">${escHtml(text)}</td>
-      <td><div class="rank-pill rank-${r.peer_rank<=3?r.peer_rank:'n'}">#${r.peer_rank}</div></td>
-      <td style="font-size:11px;font-family:monospace;color:var(--muted)">${r.reviewer_id.slice(0,8)}</td>
-      <td style="font-size:12px;color:var(--muted)">${d.toLocaleDateString()} ${d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</td>
-    </tr>`;
-  }).join('');
-}
-
-// ── Calibration ────────────────────────────────────────────
-function renderCalibration() {
-  const stats = computeIdeaStats().filter(i=>i.nReviews>0);
-  const tbody = document.getElementById('calib-tbody');
-  if (!stats.length) { tbody.innerHTML='<tr><td colspan="5"><div class="empty"><p>No data yet</p></div></td></tr>'; document.getElementById('calib-corr').textContent='—'; return; }
-
-  const rho = spearman(stats.map(i=>i.selfRank), stats.map(i=>i.avgPeerRank));
-  document.getElementById('calib-corr').textContent = isNaN(rho)?'—':rho.toFixed(2);
-
-  const el = document.getElementById('calib-interp');
-  if (isNaN(rho)) el.textContent='Not enough data.';
-  else if (rho>0.4) el.innerHTML='<span style="color:#166534;font-weight:600">Strong calibration ✅</span><br/>Self-rankings align well with peer judgments.';
-  else if (rho>0) el.innerHTML='<span style="color:#92400e;font-weight:600">Moderate calibration ⚠️</span><br/>Some alignment between self- and peer-rankings.';
-  else el.innerHTML='<span style="color:#991b1b;font-weight:600">Poor calibration ❌</span><br/>Self-rankings do not predict peer rankings.';
-
-  const byP={};
-  stats.forEach(i=>{ if(!byP[i.participantId]) byP[i.participantId]=[]; byP[i.participantId].push(i); });
-  tbody.innerHTML = Object.entries(byP).map(([pid,pidIdeas])=>{
-    const top = pidIdeas.find(i=>i.selfRank===1);
-    const sig = top&&top.nReviews>0 ? (top.avgPeerRank<=2?'<span class="badge badge-green">Good</span>':top.avgPeerRank<=3.5?'<span class="badge badge-amber">Mixed</span>':'<span class="badge badge-red">Poor</span>') : '—';
-    return `<tr>
-      <td style="font-size:11px;font-family:monospace;color:var(--muted)">${pid.slice(0,8)}</td>
-      <td>${pidIdeas.length}</td>
-      <td style="font-size:13px;max-width:200px">${top?escHtml(top.text.slice(0,60))+'…':'—'}</td>
-      <td>${top&&top.nReviews>0?top.avgPeerRank.toFixed(1):'—'}</td>
-      <td>${sig}</td>
-    </tr>`;
-  }).join('');
-}
-
-// ── Helpers ────────────────────────────────────────────────
-function computeIdeaStats() {
-  return allIdeas.map(idea=>{
-    const reviews = allReviews.filter(r=>r.idea_id===idea.id);
-    const avg = reviews.length ? reviews.reduce((s,r)=>s+r.peer_rank,0)/reviews.length : 99;
-    return {id:idea.id, text:idea.text, selfRank:idea.self_rank, participantId:idea.participant_id, nReviews:reviews.length, avgPeerRank:avg};
+function analyze() {
+  const P = D.participants, I = D.ideas, R = D.reviews;
+  const revBy = {}; R.forEach(r => (revBy[r.idea_id] = revBy[r.idea_id] || []).push(r));
+  const pBy = Object.fromEntries(P.map(p => [p.id, p]));
+  const ideas = I.map(i => { const rv = revBy[i.id] || [];
+    return { ...i, condition: pBy[i.participant_id]?.condition, peer_n: rv.length,
+             peer_score: rv.length ? mean(rv.map(r => +r.peer_score)) : null,
+             peer_rank_avg: rv.length ? mean(rv.map(r => r.peer_rank)) : null }; });
+  const parts = P.map(p => {
+    const mine = ideas.filter(i => i.participant_id === p.id);
+    const rated = mine.filter(i => i.peer_score != null);
+    const sub = rated.filter(i => i.submitted), non = rated.filter(i => !i.submitted);
+    const gap = sub.length && non.length ? mean(sub.map(i => i.peer_score)) - mean(non.map(i => i.peer_score)) : null;
+    let rho = null;
+    if (p.condition === 2) { const r = rated.filter(i => i.self_rank != null); rho = spearman(r.map(i => -i.self_rank), r.map(i => i.peer_score)); }
+    if (p.condition === 3) { const r = rated.filter(i => i.self_score != null); rho = spearman(r.map(i => i.self_score), r.map(i => i.peer_score)); }
+    return { ...p, n_ideas_db: mine.length, n_sub_db: mine.filter(i => i.submitted).length,
+             share_sub: mine.length ? mine.filter(i => i.submitted).length / mine.length : null,
+             sub_peer: sub.length ? mean(sub.map(i => i.peer_score)) : null, gap, rho,
+             reviews_given: R.filter(r => r.reviewer_id === p.id).length,
+             pasted: mine.filter(i => i.paste_count > 0).length,
+             stage: p.completed_at ? 'done' : p.n_submitted != null ? 'evaluation' : p.t_screening_ms != null ? 'selection' : p.n_ideas != null ? 'screening' : 'creation' };
   });
+  A = { ideas, parts };
 }
 
-function spearman(xs,ys) {
-  const n=xs.length; if(n<2) return NaN;
-  const rank=arr=>{const s=[...arr].map((v,i)=>({v,i})).sort((a,b)=>a.v-b.v);const r=new Array(n);s.forEach((s,ri)=>r[s.i]=ri+1);return r;};
-  const rx=rank(xs),ry=rank(ys);
-  const d2=rx.reduce((s,_,i)=>s+(rx[i]-ry[i])**2,0);
-  return 1-(6*d2)/(n*(n*n-1));
+/* ---------- render ---------- */
+function renderAll() { analyze(); renderOverview(); renderConditions(); renderIdeas(); renderParticipants(); }
+
+function renderOverview() {
+  const { ideas, parts } = A;
+  const done = parts.filter(p => p.completed_at).length;
+  const sub = ideas.filter(i => i.submitted);
+  const covered = sub.filter(i => i.peer_n >= 3).length;
+  const cov = sub.length ? covered / sub.length : 0;
+  $('#stats').innerHTML = [
+    ['Participants', parts.length, `${done} completed`],
+    ['Ideas created', ideas.length, parts.length ? `${f(ideas.length / parts.length, 1)} per person` : ''],
+    ['Ideas submitted', sub.length, ideas.length ? pct(sub.length / ideas.length) + ' of all ideas' : ''],
+    ['Peer rankings', D.reviews.length, ''],
+    ['Coverage ≥ 3', pct(cov), `${covered} of ${sub.length} submitted ideas`]
+  ].map(([k, v, s], i) => `<div class="card stat"><div class="k">${k}</div><div class="v">${v}</div><div class="s">${s}</div>${i === 4 ? `<div class="bar"><div style="width:${cov * 100}%"></div></div>` : ''}</div>`).join('');
+
+  const top = sub.filter(i => i.peer_n >= 2).sort((a, b) => b.peer_score - a.peer_score).slice(0, 8);
+  $('#topIdeas').innerHTML = top.length ? top.map((i, k) => `
+    <div class="top-item"><div class="r">#${k + 1}</div><div class="t">${esc(i.text)}</div>
+    <div class="m"><strong style="color:var(--text)">${f(i.peer_score)}</strong><br>${i.peer_n} rankings · <span class="pill c${i.condition}">C${i.condition}</span></div></div>`).join('')
+    : '<div class="empty">No submitted idea has 2+ peer rankings yet.</div>';
+
+  const stages = ['creation', 'screening', 'selection', 'evaluation', 'done'];
+  $('#progressTbl').innerHTML = `<thead><tr><th>Condition</th>${stages.map(s => `<th class="num">${s}</th>`).join('')}<th class="num">Total</th></tr></thead><tbody>` +
+    [1, 2, 3].map(c => { const ps = parts.filter(p => p.condition === c);
+      return `<tr><td><span class="pill c${c}">${c} · ${COND[c]}</span></td>${stages.map(s => `<td class="num">${ps.filter(p => p.stage === s).length}</td>`).join('')}<td class="num"><strong>${ps.length}</strong></td></tr>`; }).join('') + '</tbody>';
 }
 
-function escHtml(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
-
-// ── Nav ────────────────────────────────────────────────────
-function showPage(name) {
-  document.querySelectorAll('.page').forEach(p=>p.classList.add('hidden'));
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  document.getElementById('page-'+name).classList.remove('hidden');
-  document.getElementById('nav-'+name).classList.add('active');
-  const t={overview:'Overview',ideas:'Ideas',reviews:'Peer Rankings',calibration:'Calibration'};
-  document.getElementById('pageTitle').textContent=t[name];
+function renderConditions() {
+  $('#poolNote').className = 'note' + (PEER_POOL === 'submitted' ? ' warn' : '');
+  $('#poolNote').innerHTML = PEER_POOL === 'submitted'
+    ? "<strong>Peer pool = submitted ideas only.</strong> Non-submitted ideas get no peer evaluations, so the selection gap can't be computed from peer data. Use external ratings of all ideas (ideas.csv), or set PEER_POOL = 'all'."
+    : '<strong>Peer pool = all ideas.</strong> Submitted and non-submitted ideas are both peer-evaluated, so the selection gap can be computed.';
+  const rows = [
+    ['Completed participants', ps => ps.length, v => v],
+    ['Ideas created (mean)', ps => mean(ps.map(p => p.n_ideas_db)), v => f(v, 1)],
+    ['Ideas submitted (mean)', ps => mean(ps.map(p => p.n_sub_db)), v => f(v, 1)],
+    ['Share submitted (mean)', ps => mean(ps.filter(p => p.share_sub != null).map(p => p.share_sub)), pct],
+    ['Generation time (mean)', ps => mean(ps.filter(p => p.t_generation_ms != null).map(p => p.t_generation_ms)), sec],
+    ['Screening time (mean)', ps => mean(ps.filter(p => p.t_screening_ms != null).map(p => p.t_screening_ms)), sec],
+    ['Selection time (mean)', ps => mean(ps.filter(p => p.t_selection_ms != null).map(p => p.t_selection_ms)), sec],
+    ['Peer score of submitted ideas', ps => mean(ps.filter(p => p.sub_peer != null).map(p => p.sub_peer)), v => f(v)],
+    ['Selection gap (sub − non-sub)', ps => { const g = ps.filter(p => p.gap != null); return g.length ? [mean(g.map(p => p.gap)), g.length] : null; }, v => v ? `${f(v[0])} <span class="mono">n=${v[1]}</span>` : '—'],
+    ['Self–peer ρ (mean)', ps => { const g = ps.filter(p => p.rho != null); return g.length ? [mean(g.map(p => p.rho)), g.length] : null; }, v => v ? `${f(v[0])} <span class="mono">n=${v[1]}</span>` : '—'],
+    ['Ideas with pasted text', ps => ps.reduce((s, p) => s + p.pasted, 0), v => v]
+  ];
+  const by = [1, 2, 3].map(c => A.parts.filter(p => p.condition === c && p.completed_at));
+  $('#condTbl').innerHTML = `<thead><tr><th>Measure</th>${[1, 2, 3].map(c => `<th class="num"><span class="pill c${c}">${c} · ${COND[c]}</span></th>`).join('')}</tr></thead><tbody>` +
+    rows.map(([lbl, fn, fmt]) => `<tr><td>${lbl}</td>${by.map((ps, k) => `<td class="num">${(lbl.startsWith('Self') && k === 0) ? '<span class="mono">n/a</span>' : fmt(fn(ps))}</td>`).join('')}</tr>`).join('') + '</tbody>';
 }
 
-// ── Export ─────────────────────────────────────────────────
-function exportCSV() {
-  const stats=computeIdeaStats();
-  const rows=[['idea_id','participant_id','text','self_rank','n_reviews','avg_peer_rank']];
-  stats.forEach(i=>rows.push([i.id,i.participantId,'"'+i.text.replace(/"/g,'""')+'"',i.selfRank,i.nReviews,i.avgPeerRank===99?'':i.avgPeerRank.toFixed(2)]));
-  downloadCSV(rows,'idea_friction_export.csv');
-}
-function exportTableCSV(tableId,filename) {
-  const table=document.getElementById(tableId);const rows=[];
-  table.querySelectorAll('tr').forEach(tr=>{rows.push([...tr.querySelectorAll('th,td')].map(c=>'"'+c.innerText.replace(/"/g,'""')+'"'));});
-  downloadCSV(rows,filename+'.csv');
-}
-function downloadCSV(rows,filename) {
-  const csv=rows.map(r=>r.join(',')).join('\n');
-  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download=filename;a.click();
-}
-
-// ── Reset ──────────────────────────────────────────────────
-function openResetModal(){document.getElementById('resetModal').classList.remove('hidden');}
-function closeResetModal(){document.getElementById('resetModal').classList.add('hidden');}
-async function confirmReset() {
-  closeResetModal();
-  showToast('Deleting…');
-  await sb.from('reviews').delete().gte('id','00000000-0000-0000-0000-000000000000');
-  await sb.from('ideas').delete().gte('id','00000000-0000-0000-0000-000000000000');
-  await sb.from('participants').delete().gte('id','00000000-0000-0000-0000-000000000000');
-  allIdeas=[]; allReviews=[]; allParticipants=[];
-  renderAll();
-  showToast('All data deleted');
+function renderIdeas() {
+  const c = $('#fCond').value, s = $('#fSub').value, q = $('#fText').value.toLowerCase();
+  const list = A.ideas.filter(i => (!c || String(i.condition) === c) && (!s || (s === '1') === !!i.submitted) && (!q || i.text.toLowerCase().includes(q)))
+    .sort((a, b) => (b.peer_score ?? -1) - (a.peer_score ?? -1));
+  $('#ideaCount').textContent = `${list.length} ideas`;
+  $('#ideasTbl').innerHTML = `<thead><tr><th>Idea</th><th>Cond.</th><th>Submitted</th><th class="num">Self rank</th><th class="num">Self score</th><th class="num">Peer n</th><th class="num">Peer score</th><th>Pasted</th><th>Participant</th></tr></thead><tbody>` +
+    (list.length ? list.map(i => `<tr>
+      <td class="txt">${esc(i.text)}</td>
+      <td><span class="pill c${i.condition}">${i.condition}</span></td>
+      <td><span class="pill ${i.submitted ? 'yes' : 'no'}">${i.submitted ? 'yes' : 'no'}</span></td>
+      <td class="num">${i.self_rank ?? '—'}</td><td class="num">${i.self_score ?? '—'}</td>
+      <td class="num">${i.peer_n}</td><td class="num"><strong>${f(i.peer_score)}</strong></td>
+      <td>${i.paste_count > 0 ? `<span class="pill warn">${i.pasted_chars} chars</span>` : ''}</td>
+      <td class="mono">${i.participant_id.slice(0, 8)}</td></tr>`).join('') : '<tr><td colspan="9" class="empty">No ideas match.</td></tr>') + '</tbody>';
 }
 
-// ── Toast ──────────────────────────────────────────────────
-function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+function renderParticipants() {
+  const list = [...A.parts].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  $('#partTbl').innerHTML = `<thead><tr><th>Participant</th><th>Cond.</th><th>Stage</th><th class="num">Ideas</th><th class="num">Submitted</th><th class="num">Rankings given</th><th class="num">Gen. time</th><th class="num">Gap</th><th class="num">Self–peer ρ</th><th>No-AI ✓</th><th>Pasted ideas</th><th>Started</th></tr></thead><tbody>` +
+    (list.length ? list.map(p => `<tr>
+      <td class="mono">${p.id.slice(0, 8)}</td><td><span class="pill c${p.condition}">${p.condition}</span></td>
+      <td>${p.stage}${p.evaluation_skipped ? ' <span class="pill warn">skipped eval</span>' : ''}</td>
+      <td class="num">${p.n_ideas_db}</td><td class="num">${p.n_sub_db}</td><td class="num">${p.reviews_given}</td>
+      <td class="num">${sec(p.t_generation_ms)}</td><td class="num">${f(p.gap)}</td><td class="num">${f(p.rho)}</td>
+      <td>${p.no_ai_confirmed ? '<span class="pill yes">yes</span>' : '—'}</td>
+      <td>${p.pasted ? `<span class="pill warn">${p.pasted}</span>` : ''}</td>
+      <td class="mono">${new Date(p.created_at).toLocaleString()}</td></tr>`).join('') : '<tr><td colspan="12" class="empty">No participants yet.</td></tr>') + '</tbody>';
+}
 
-// ── Init ───────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => { refreshAll(); });
+/* ---------- data ---------- */
+async function load(silent) {
+  try {
+    D = await rpc('admin_dump', { p_pw: PW });
+    renderAll();
+    $('#updated').textContent = 'Updated ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    if (!silent) toast(`${D.participants.length} participants · ${D.ideas.length} ideas · ${D.reviews.length} rankings`);
+    return true;
+  } catch (e) { if (!silent) toast('Could not load: ' + e.message); return false; }
+}
+
+function csv(rows, cols, name) {
+  const cell = v => v == null ? '' : typeof v === 'number' || typeof v === 'boolean' ? String(v) : `"${String(v).replace(/"/g, '""')}"`;
+  const out = [cols.join(','), ...rows.map(r => cols.map(c => cell(r[c])).join(','))].join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['\ufeff' + out], { type: 'text/csv;charset=utf-8' }));
+  a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+const EXPORTS = {
+  ideas: () => csv(A.ideas, ['id', 'participant_id', 'condition', 'text', 'position', 'created_at', 'screen_order', 'self_rank', 'self_score', 'submitted', 'peer_n', 'peer_score', 'peer_rank_avg', 'assigned_count', 'paste_count', 'pasted_chars'], 'ideas.csv'),
+  participants: () => csv(A.parts, ['id', 'condition', 'created_at', 'completed_at', 'n_ideas', 'n_submitted', 'share_sub', 't_generation_ms', 't_screening_ms', 't_selection_ms', 't_evaluation_ms', 'screening_interactions', 'no_ai_confirmed', 'evaluation_skipped', 'reviews_given', 'pasted', 'gap', 'rho', 'user_agent'], 'participants.csv'),
+  reviews: () => csv(D.reviews, ['id', 'idea_id', 'reviewer_id', 'peer_rank', 'set_size', 'peer_score', 'created_at'], 'reviews.csv')
+};
+
+/* ---------- events ---------- */
+$('#loginForm').addEventListener('submit', async e => {
+  e.preventDefault(); PW = $('#pw').value; $('#loginErr').textContent = '';
+  const btn = e.submitter; if (btn) btn.disabled = true;
+  try { D = await rpc('admin_dump', { p_pw: PW }); $('#login').classList.add('hidden'); $('#dash').classList.remove('hidden'); await load(true); setAuto(); }
+  catch (err) { $('#loginErr').textContent = /password/i.test(err.message) ? 'Wrong password.' : 'Could not connect: ' + err.message; }
+  if (btn) btn.disabled = false;
+});
+document.querySelectorAll('nav button').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('nav button').forEach(x => x.setAttribute('aria-selected', x === b));
+  document.querySelectorAll('[data-page]').forEach(p => p.classList.toggle('hidden', p.dataset.page !== b.dataset.tab));
+}));
+$('#refresh').onclick = () => load(false);
+function setAuto() { clearInterval(autoTimer); if ($('#auto').checked) autoTimer = setInterval(() => load(true), 15000); }
+$('#auto').onchange = setAuto;
+['#fCond', '#fSub'].forEach(s => $(s).onchange = renderIdeas);
+$('#fText').oninput = renderIdeas;
+document.querySelectorAll('[data-export]').forEach(b => b.onclick = () => EXPORTS[b.dataset.export]());
+$('#resetConfirm').oninput = e => $('#resetBtn').disabled = e.target.value !== 'RESET';
+$('#resetBtn').onclick = async () => {
+  try { await rpc('admin_reset', { p_pw: PW }); $('#resetConfirm').value = ''; $('#resetBtn').disabled = true; await load(true); toast('All data deleted'); }
+  catch (e) { toast('Reset failed: ' + e.message); }
+};
 </script>
 </body>
 </html>
